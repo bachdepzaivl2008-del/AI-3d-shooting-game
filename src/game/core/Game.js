@@ -1,5 +1,6 @@
 import { LocalAuthorityHost } from './LocalAuthorityHost.js'
 import { createSceneView } from '../../client/renderer/createSceneView.js'
+import { BrowserInputSource } from '../../client/input/BrowserInputSource.js'
 
 export class Game {
   constructor(config) {
@@ -7,6 +8,7 @@ export class Game {
 
     this.authority = new LocalAuthorityHost(config)
     this.sceneView = createSceneView(config)
+    this.inputSource = new BrowserInputSource()
 
     this.lastFrameTime = 0
     this.accumulator = 0
@@ -42,7 +44,12 @@ export class Game {
       this.accumulator >=
       this.config.simulation.fixedDeltaTime
     ) {
+      this.authority.submitIntent(
+        this.inputSource.sampleIntent()
+      )
+
       this.authority.step()
+
       this.accumulator -=
         this.config.simulation.fixedDeltaTime
     }
@@ -61,6 +68,7 @@ export class Game {
       this.animationFrameId = null
     }
 
+    this.inputSource.dispose()
     this.sceneView.dispose()
   }
 }

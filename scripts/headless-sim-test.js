@@ -4,6 +4,7 @@ import { gameConfig } from '../src/game/config/gameConfig.js'
 import { LocalAuthorityHost } from '../src/game/core/LocalAuthorityHost.js'
 import { SeededRandom } from '../src/shared/random/SeededRandom.js'
 import { StableIdAllocator } from '../src/shared/ids/StableIdAllocator.js'
+import { IntentSequencer } from '../src/shared/intents/IntentSequencer.js'
 
 function nearlyEqual(actual, expected, epsilon = 1e-9) {
   return Math.abs(actual - expected) <= epsilon
@@ -15,20 +16,25 @@ assert.equal(
   'Headless test must not depend on a browser window'
 )
 
+const sequencer = new IntentSequencer('test:input')
+
+const firstIntent = sequencer.create('ARCHITECTURE_TEST', {})
+const secondIntent = sequencer.create('ARCHITECTURE_TEST', {})
+
+assert.equal(firstIntent.sourceId, 'test:input')
+assert.equal(firstIntent.sequence, 1)
+assert.equal(secondIntent.sequence, 2)
+assert.equal(sequencer.peekNextSequence(), 3)
+
 const authority = new LocalAuthorityHost(gameConfig)
 
-authority.submitIntent({
-  type: 'ARCHITECTURE_TEST',
-  sourceId: 'test:000001',
-  sequence: 1,
-  payload: {},
-})
-
+authority.submitIntent(firstIntent)
+authority.submitIntent(secondIntent)
 authority.step()
 
 assert.equal(
   authority.getLastProcessedIntentCount(),
-  1,
+  2,
   'Authority host must drain submitted intents into one simulation step'
 )
 
@@ -57,6 +63,7 @@ assert.equal(ids.peek(), 'test:000003')
 
 console.log('Headless simulation test: PASS')
 console.log('Authority boundary test: PASS')
+console.log('Input sequencing test: PASS')
 console.log({
   tick: state.tick,
   time: state.time,
