@@ -7,12 +7,14 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "sim:test": "node scripts/headless-sim-test.js"
+    "sim:test": "node scripts/headless-sim-test.js",
+    "collision:test": "node scripts/collision-headless-test.js"
   },
   "devDependencies": {
     "vite": "^8.2.0"
   },
   "dependencies": {
+    "@dimforge/rapier3d-compat": "0.20.0",
     "three": "^0.185.1"
   }
 }

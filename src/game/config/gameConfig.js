@@ -5,6 +5,26 @@ export const gameConfig = {
     randomSeed: 0x3d5a2026,
   },
 
+  collision: {
+    gravity: {
+      x: 0,
+      y: -20,
+      z: 0,
+    },
+
+    character: {
+      standingHeight: 1.8,
+      radius: 0.35,
+      stepHeight: 0.35,
+      maxSlopeDegrees: 45,
+
+      // Technical collision margins for the first prototype.
+      controllerOffset: 0.01,
+      autostepMinWidth: 0.2,
+      snapToGroundDistance: 0.2,
+    },
+  },
+
   world: {
     backgroundColor: 0x87ceeb,
     groundSize: 30,
