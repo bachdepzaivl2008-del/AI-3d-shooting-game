@@ -14,12 +14,16 @@ export class RapierCollisionWorld {
     this.characterControllers = new Set()
   }
 
-  createStaticBox({ center, halfExtents }) {
-    const desc = this.RAPIER.ColliderDesc.cuboid(
+  createStaticBox({ center, halfExtents, rotation = null }) {
+    let desc = this.RAPIER.ColliderDesc.cuboid(
       halfExtents.x,
       halfExtents.y,
       halfExtents.z
     ).setTranslation(center.x, center.y, center.z)
+
+    if (rotation) {
+      desc = desc.setRotation(rotation)
+    }
 
     return this.world.createCollider(desc)
   }

@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "sim:test": "node scripts/headless-sim-test.js",
-    "collision:test": "node scripts/collision-headless-test.js"
+    "collision:test": "node scripts/collision-headless-test.js",
+    "character:test": "node scripts/character-collision-test.js"
   },
   "devDependencies": {
     "vite": "^8.2.0"
