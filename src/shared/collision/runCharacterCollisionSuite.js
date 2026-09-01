@@ -136,7 +136,7 @@ async function runRampScenario(config) {
       halfExtents: { x: 8, y: 0.5, z: 3 },
     })
 
-    const angleDegrees = 40
+    const angleDegrees = 35
     const angle = (angleDegrees * Math.PI) / 180
     const halfLength = 1.5
     const halfThickness = 0.1

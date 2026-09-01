@@ -62,6 +62,7 @@ export class RapierCollisionWorld {
     const controller =
       this.world.createCharacterController(controllerOffset)
 
+    controller.setSlideEnabled(true)
     controller.setMaxSlopeClimbAngle(maxSlopeClimbAngle)
     controller.enableAutostep(
       stepHeight,
