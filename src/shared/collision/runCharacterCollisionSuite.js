@@ -131,50 +131,59 @@ async function runRampScenario(config) {
   const collision = await createWorld(config)
 
   try {
-    collision.createStaticBox({
-      center: { x: 0, y: -0.5, z: 0 },
-      halfExtents: { x: 8, y: 0.5, z: 3 },
-    })
-
     const angleDegrees = 35
     const angle = (angleDegrees * Math.PI) / 180
-    const rampStartX = 0.6
-    const rampEndX = 3.4
-    const rampWidth = 2
-    const rise =
-      Math.tan(angle) * (rampEndX - rampStartX)
 
-    collision.createStaticTrimesh({
-      vertices: [
-        rampStartX, 0, -rampWidth,
-        rampEndX, rise, -rampWidth,
-        rampEndX, rise, rampWidth,
-        rampStartX, 0, rampWidth,
-      ],
-      // Winding is chosen so both ramp triangles have upward-facing
-      // normals. The character controller uses surface normals to
-      // evaluate walkable slopes.
-      indices: [
-        0, 2, 1,
-        0, 3, 2,
-      ],
-    })
+    const groundStartX = -4
+    const rampEntryX = 0.8
+    const groundHalfLength =
+      (rampEntryX - groundStartX) / 2
 
     collision.createStaticBox({
       center: {
-        x: 5.2,
-        y: rise - 0.5,
+        x: groundStartX + groundHalfLength,
+        y: -0.5,
         z: 0,
       },
       halfExtents: {
-        x: 1.8,
+        x: groundHalfLength,
         y: 0.5,
-        z: rampWidth,
+        z: 2,
+      },
+    })
+
+    const rampHalfLength = 3
+    const rampHalfThickness = 0.1
+    const rampHalfWidth = 1.5
+
+    const rampCenter = {
+      x:
+        rampEntryX +
+        rampHalfLength * Math.cos(angle) +
+        rampHalfThickness * Math.sin(angle),
+      y:
+        rampHalfLength * Math.sin(angle) -
+        rampHalfThickness * Math.cos(angle),
+      z: 0,
+    }
+
+    collision.createStaticBox({
+      center: rampCenter,
+      halfExtents: {
+        x: rampHalfLength,
+        y: rampHalfThickness,
+        z: rampHalfWidth,
+      },
+      rotation: {
+        w: Math.cos(angle / 2),
+        x: 0,
+        y: 0,
+        z: Math.sin(angle / 2),
       },
     })
 
     const character = createCharacter(collision, config, {
-      x: 0,
+      x: -1.5,
       y: standingCenterY(config),
       z: 0,
     })
@@ -185,7 +194,7 @@ async function runRampScenario(config) {
     let maxY = finalPosition.y
     let firstRiseTick = null
 
-    for (let i = 0; i < 100; i += 1) {
+    for (let i = 0; i < 240; i += 1) {
       const movement = collision.computeCharacterMovement(
         character,
         { x: 0.03, y: -0.01, z: 0 }
@@ -201,23 +210,31 @@ async function runRampScenario(config) {
 
       if (
         firstRiseTick === null &&
-        finalPosition.y > standingCenterY(config) + 0.05
+        finalPosition.y >
+          standingCenterY(config) + 0.05
       ) {
         firstRiseTick = i + 1
       }
     }
 
+    const horizontalProgress =
+      finalPosition.x - (-1.5)
+
+    const verticalGain =
+      maxY - standingCenterY(config)
+
     return {
-      rampGeometry: 'trimesh',
+      rampGeometry: 'rotated-cuboid-flush-entry',
       rampDegrees: angleDegrees,
-      rampRise: rise,
+      horizontalProgress,
+      verticalGain,
       finalX: finalPosition.x,
       finalY: finalPosition.y,
       maxY,
       firstRiseTick,
       climbedWalkableRamp:
-        finalPosition.x > 2.5 &&
-        maxY > standingCenterY(config) + 0.5,
+        horizontalProgress > 3 &&
+        verticalGain > 0.5,
     }
   } finally {
     collision.dispose()

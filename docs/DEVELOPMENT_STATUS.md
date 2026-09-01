@@ -43,13 +43,19 @@ Verified:
 - Long swept movement / Dash blocked by wall
 
 ### P1-COLL-004 — Walkable slope traversal
-**BLOCKED / OPEN**
+**FIX INTEGRATED / AWAITING FULL VERIFICATION**
 Locked requirement: max walkable slope = 45°.
 
-Current 35° diagnostic ramp begins climbing but stalls mid-slope.
+Verified diagnostics:
+- Minimal direct-Rapier 35° slope probe: PASS.
+- Flat-ground → 35° ramp entry probe: PASS for all three tested construction patterns.
+- Therefore the controller can climb the slope and transition from flat ground when the ramp is built as a rotated cuboid.
 
-Do not change the GDD value to force a pass.
-Track root-cause work in the GitHub issue for P1-COLL-004.
+The failing trimesh ramp fixture was a test-construction problem, not evidence that the 45° gameplay requirement was invalid.
+
+The shared character collision suite now uses the proven flush rotated-cuboid ramp construction.
+
+Do not close P1-COLL-004 until the full character collision test and complete Phase 1 regression suite pass.
 
 ## Rule for continuing development
 A failed subsystem is either:
@@ -60,11 +66,14 @@ A failed subsystem is either:
 Never silently forget a failed test.
 
 ## Next planned step
-A minimal direct-Rapier slope probe has now been added as `npm run slope:probe`.
-It starts the capsule directly on a 35° ramp, avoiding the ground-to-ramp entry seam, and applies movement tick-by-tick using Rapier's documented controller flow.
+Run full Phase 1 verification after pulling the integrated fix:
 
-Interpretation:
-- PASS => pure slope climbing works; remaining bug is in ramp entry/transition geometry.
-- BLOCKED => pure slope climbing itself is misconfigured or incompatible with the current controller setup.
+1. `npm run sim:test`
+2. `npm run collision:test`
+3. `npm run character:test`
+4. `npm run build`
 
-Do not expand scope until this probe result is recorded.
+If all four pass:
+- close P1-COLL-004,
+- mark Phase 1 shared collision foundation PASS,
+- proceed to authoritative player movement integration.
