@@ -23,39 +23,38 @@ Verified:
 - Intent buffer
 - Input sequencing
 
-## Phase 1 status
-
-### P1-COLL-001 — Shared collision runtime
+## Phase 1
 **PASS**
-- Rapier runs in browser
-- Rapier runs headless/server-compatible
 
-### P1-COLL-002 — Basic world collision
-**PASS**
-- Ground ray
+Verified:
+- Rapier shared collision runtime works in browser
+- Rapier shared collision runtime works headless/server-compatible
+- Ground ray / floor query
 - Grounded detection
 - Wall blocking
-
-### P1-COLL-003 — Character traversal basics
-**PASS**
 - 0.34 m autostep
 - 0.10 m ground snap
 - Long swept movement / Dash blocked by wall
+- Walkable 35° ramp traversal using the proven rotated-cuboid construction
+- Flat-ground → ramp transition
+- Full regression verification:
+  - `npm run sim:test` PASS
+  - `npm run collision:test` PASS
+  - `npm run character:test` PASS
+  - `npm run build` PASS
 
 ### P1-COLL-004 — Walkable slope traversal
-**FIX INTEGRATED / AWAITING FULL VERIFICATION**
-Locked requirement: max walkable slope = 45°.
+**CLOSED / PASS**
 
-Verified diagnostics:
-- Minimal direct-Rapier 35° slope probe: PASS.
-- Flat-ground → 35° ramp entry probe: PASS for all three tested construction patterns.
-- Therefore the controller can climb the slope and transition from flat ground when the ramp is built as a rotated cuboid.
+Root cause:
+- The earlier failing fixture used a trimesh ramp construction that stalled the character controller mid-slope.
+- Minimal direct-slope probing proved pure slope climbing worked.
+- Dedicated entry probing proved flat-ground → ramp transition worked.
+- Replacing the failing fixture with a proven flush rotated-cuboid ramp construction resolved the regression.
 
-The failing trimesh ramp fixture was a test-construction problem, not evidence that the 45° gameplay requirement was invalid.
-
-The shared character collision suite now uses the proven flush rotated-cuboid ramp construction.
-
-Do not close P1-COLL-004 until the full character collision test and complete Phase 1 regression suite pass.
+Design requirement preserved:
+- Max walkable slope remains 45°.
+- No GDD value was changed to force the test green.
 
 ## Rule for continuing development
 A failed subsystem is either:
@@ -66,14 +65,26 @@ A failed subsystem is either:
 Never silently forget a failed test.
 
 ## Next planned step
-Run full Phase 1 verification after pulling the integrated fix:
+Proceed to authoritative player movement integration:
 
-1. `npm run sim:test`
-2. `npm run collision:test`
-3. `npm run character:test`
-4. `npm run build`
+```text
+Browser Input
+    ↓
+PLAYER_INPUT Intent
+    ↓
+LocalAuthorityHost
+    ↓
+Player Movement System
+    ↓
+Rapier Character Controller
+    ↓
+Authoritative Player State
+    ↓
+Three.js Camera / View
+```
 
-If all four pass:
-- close P1-COLL-004,
-- mark Phase 1 shared collision foundation PASS,
-- proceed to authoritative player movement integration.
+First target:
+- create authoritative player state,
+- wire WASD movement into the simulation,
+- move the Rapier capsule through the shared collision layer,
+- render/follow the authoritative position in Three.js.
