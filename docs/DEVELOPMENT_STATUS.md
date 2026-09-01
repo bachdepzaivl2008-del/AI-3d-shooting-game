@@ -60,5 +60,11 @@ A failed subsystem is either:
 Never silently forget a failed test.
 
 ## Next planned step
-Isolate P1-COLL-004 with a minimal Rapier slope probe based on the official controller pattern.
-Do not expand scope until the slope behavior is understood or formally deferred.
+A minimal direct-Rapier slope probe has now been added as `npm run slope:probe`.
+It starts the capsule directly on a 35° ramp, avoiding the ground-to-ramp entry seam, and applies movement tick-by-tick using Rapier's documented controller flow.
+
+Interpretation:
+- PASS => pure slope climbing works; remaining bug is in ramp entry/transition geometry.
+- BLOCKED => pure slope climbing itself is misconfigured or incompatible with the current controller setup.
+
+Do not expand scope until this probe result is recorded.
