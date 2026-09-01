@@ -35,6 +35,26 @@ for (let tick = 0; tick < 60; tick += 1) {
 const state = authority.getState()
 const player = state.player
 
+const actualDistanceX =
+  player.position.x - start.x
+
+const expectedDistanceX =
+  gameConfig.movement.baseSpeed
+
+const distanceError =
+  actualDistanceX - expectedDistanceX
+
+console.log('Authoritative movement diagnostic', {
+  start,
+  end: player.position,
+  actualDistanceX,
+  expectedDistanceX,
+  distanceError,
+  lastInputSequence:
+    player.lastInputSequence,
+  grounded: player.grounded,
+})
+
 assert.ok(
   nearlyEqual(
     player.position.x - start.x,

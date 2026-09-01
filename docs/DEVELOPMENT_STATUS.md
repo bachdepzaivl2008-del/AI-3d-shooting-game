@@ -128,3 +128,15 @@ Verification commands:
 - `npm run build`
 
 If all pass and browser preview moves with WASD, mark P2-MOVE-001 PASS.
+
+
+## Latest verification result — P2-MOVE-001
+- `sim:test`: PASS
+- `collision:test`: PASS
+- `character:test`: PASS
+- `build`: PASS
+- `movement:test`: FAIL on one-second rightward distance assertion
+
+Current action:
+- isolate the actual authoritative displacement before changing implementation or thresholds,
+- keep P2-MOVE-001 OPEN until root cause is understood.
