@@ -1,11 +1,11 @@
-import { Simulation } from './Simulation.js'
+import { LocalAuthorityHost } from './LocalAuthorityHost.js'
 import { createSceneView } from '../../client/renderer/createSceneView.js'
 
 export class Game {
   constructor(config) {
     this.config = config
 
-    this.simulation = new Simulation(config)
+    this.authority = new LocalAuthorityHost(config)
     this.sceneView = createSceneView(config)
 
     this.lastFrameTime = 0
@@ -42,12 +42,12 @@ export class Game {
       this.accumulator >=
       this.config.simulation.fixedDeltaTime
     ) {
-      this.simulation.update()
+      this.authority.step()
       this.accumulator -=
         this.config.simulation.fixedDeltaTime
     }
 
-    this.sceneView.render(this.simulation.getState())
+    this.sceneView.render(this.authority.getState())
 
     this.animationFrameId =
       requestAnimationFrame(this.loop)

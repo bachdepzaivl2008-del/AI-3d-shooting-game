@@ -22,7 +22,11 @@ export class Simulation {
     })
   }
 
-  update() {
+  update(intents = []) {
+    if (!Array.isArray(intents)) {
+      throw new Error('Simulation intents must be an array')
+    }
+
     const clockState = this.clock.advance()
     const deltaTime = clockState.fixedDeltaTime
 

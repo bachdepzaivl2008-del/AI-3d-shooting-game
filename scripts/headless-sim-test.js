@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 
 import { gameConfig } from '../src/game/config/gameConfig.js'
-import { Simulation } from '../src/game/core/Simulation.js'
+import { LocalAuthorityHost } from '../src/game/core/LocalAuthorityHost.js'
 import { SeededRandom } from '../src/shared/random/SeededRandom.js'
 import { StableIdAllocator } from '../src/shared/ids/StableIdAllocator.js'
 
@@ -15,13 +15,28 @@ assert.equal(
   'Headless test must not depend on a browser window'
 )
 
-const simulation = new Simulation(gameConfig)
+const authority = new LocalAuthorityHost(gameConfig)
 
-for (let i = 0; i < 60; i += 1) {
-  simulation.update()
+authority.submitIntent({
+  type: 'ARCHITECTURE_TEST',
+  sourceId: 'test:000001',
+  sequence: 1,
+  payload: {},
+})
+
+authority.step()
+
+assert.equal(
+  authority.getLastProcessedIntentCount(),
+  1,
+  'Authority host must drain submitted intents into one simulation step'
+)
+
+for (let i = 1; i < 60; i += 1) {
+  authority.step()
 }
 
-const state = simulation.getState()
+const state = authority.getState()
 
 assert.equal(state.tick, 60)
 assert.ok(nearlyEqual(state.time, 1))
@@ -41,6 +56,7 @@ assert.equal(ids.next(), 'test:000002')
 assert.equal(ids.peek(), 'test:000003')
 
 console.log('Headless simulation test: PASS')
+console.log('Authority boundary test: PASS')
 console.log({
   tick: state.tick,
   time: state.time,
