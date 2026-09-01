@@ -29,7 +29,10 @@ export const gameConfig = {
     // IIV technical placeholder for the first movement integration pass.
     // This is NOT a locked balance value.
     baseSpeed: 6,
-    groundStickPerTick: 0.02,
+
+    // Rapier snap-to-ground requires a slight downward component.
+    // Keep the bias tiny so it doesn't materially reduce planar speed.
+    groundSnapBiasPerTick: 0.001,
   },
 
   player: {
