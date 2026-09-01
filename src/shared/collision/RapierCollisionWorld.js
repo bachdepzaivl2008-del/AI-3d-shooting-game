@@ -31,7 +31,8 @@ export class RapierCollisionWorld {
   createStaticTrimesh({ vertices, indices }) {
     const desc = this.RAPIER.ColliderDesc.trimesh(
       new Float32Array(vertices),
-      new Uint32Array(indices)
+      new Uint32Array(indices),
+      this.RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES
     )
 
     return this.world.createCollider(desc)
