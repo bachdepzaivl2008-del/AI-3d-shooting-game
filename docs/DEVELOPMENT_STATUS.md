@@ -159,3 +159,11 @@ Fix integrated:
 - movement-test tolerance is unchanged.
 
 This is a technical controller correction, not a balance change.
+
+
+## P2-MOVE-001 verification update
+- `movement:test`: PASS after reducing the Rapier ground-snap bias.
+- Base speed remains 6 m/s IIV.
+- No tolerance relaxation was required.
+
+P2-MOVE-001 is now awaiting one final full regression pass before closure.
