@@ -95,7 +95,7 @@ export class PlayerMovementSystem {
 
     const desiredMovement = {
       x: direction.x * distance,
-      y: -this.config.movement.groundStickPerTick,
+      y: -this.config.movement.groundSnapBiasPerTick,
       z: direction.z * distance,
     }
 
