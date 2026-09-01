@@ -42,9 +42,7 @@ export class Game {
       this.accumulator >=
       this.config.simulation.fixedDeltaTime
     ) {
-      this.simulation.update(
-        this.config.simulation.fixedDeltaTime
-      )
+      this.simulation.update()
       this.accumulator -=
         this.config.simulation.fixedDeltaTime
     }

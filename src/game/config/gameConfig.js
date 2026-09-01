@@ -2,6 +2,7 @@ export const gameConfig = {
   simulation: {
     fixedDeltaTime: 1 / 60,
     maxFrameTime: 0.1,
+    randomSeed: 0x3d5a2026,
   },
 
   world: {
