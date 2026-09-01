@@ -151,9 +151,12 @@ async function runRampScenario(config) {
         rampEndX, rise, rampWidth,
         rampStartX, 0, rampWidth,
       ],
+      // Winding is chosen so both ramp triangles have upward-facing
+      // normals. The character controller uses surface normals to
+      // evaluate walkable slopes.
       indices: [
-        0, 1, 2,
-        0, 2, 3,
+        0, 2, 1,
+        0, 3, 2,
       ],
     })
 
