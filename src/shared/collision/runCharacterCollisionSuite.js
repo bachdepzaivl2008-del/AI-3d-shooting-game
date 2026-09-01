@@ -96,9 +96,6 @@ async function runStepScenario(config) {
       halfExtents: { x: 5, y: 0.5, z: 3 },
     })
 
-    // 0.34 m is intentionally just under the canonical 0.35 m step limit
-    // so the test verifies the allowed side of the threshold without
-    // depending on floating-point equality at the exact boundary.
     collision.createStaticBox({
       center: { x: 1.1, y: 0.17, z: 0 },
       halfExtents: { x: 0.5, y: 0.17, z: 1 },
@@ -178,18 +175,28 @@ async function runRampScenario(config) {
 
     collision.prepareQueries()
 
-    const movement = collision.computeCharacterMovement(
-      character,
-      { x: 2.6, y: -0.05, z: 0 }
-    )
+    let finalPosition = character.body.translation()
+
+    for (let i = 0; i < 100; i += 1) {
+      const movement = collision.computeCharacterMovement(
+        character,
+        { x: 0.03, y: -0.01, z: 0 }
+      )
+
+      finalPosition =
+        collision.applyCharacterMovement(
+          character,
+          movement
+        )
+    }
 
     return {
       rampDegrees: angleDegrees,
-      correctedX: movement.x,
-      correctedY: movement.y,
+      finalX: finalPosition.x,
+      finalY: finalPosition.y,
       climbedWalkableRamp:
-        movement.x > 2.0 &&
-        movement.y > 0.5,
+        finalPosition.x > 2.0 &&
+        finalPosition.y > standingCenterY(config) + 0.5,
     }
   } finally {
     collision.dispose()

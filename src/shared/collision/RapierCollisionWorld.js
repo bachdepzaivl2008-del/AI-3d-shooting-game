@@ -101,6 +101,26 @@ export class RapierCollisionWorld {
     }
   }
 
+  applyCharacterMovement(character, movement) {
+    const current = character.body.translation()
+
+    character.body.setNextKinematicTranslation({
+      x: current.x + movement.x,
+      y: current.y + movement.y,
+      z: current.z + movement.z,
+    })
+
+    this.world.step()
+
+    const updated = character.body.translation()
+
+    return {
+      x: updated.x,
+      y: updated.y,
+      z: updated.z,
+    }
+  }
+
   castRay(origin, direction, maxDistance, solid = true) {
     const ray = new this.RAPIER.Ray(origin, direction)
     const hit = this.world.castRay(
