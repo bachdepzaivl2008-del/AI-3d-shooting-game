@@ -68,7 +68,7 @@ Never silently forget a failed test.
 **IN PROGRESS**
 
 ### P2-MOVE-001 — Authoritative base WASD movement
-**IMPLEMENTED / AWAITING VERIFICATION**
+**PASS / CLOSED**
 
 Implemented:
 - authoritative player state,
@@ -167,3 +167,35 @@ This is a technical controller correction, not a balance change.
 - No tolerance relaxation was required.
 
 P2-MOVE-001 is now awaiting one final full regression pass before closure.
+
+
+## P2-MOVE-001 final verification
+Full regression PASS confirmed:
+- `npm run sim:test`: PASS
+- `npm run collision:test`: PASS
+- `npm run character:test`: PASS
+- `npm run movement:test`: PASS
+- `npm run build`: PASS
+
+Additional verified result:
+- authoritative player movement covers ~6.0 m in 1 second at the current 6 m/s IIV,
+- input sequence reaches 60 after 60 simulation ticks,
+- player remains grounded on flat terrain,
+- no regression detected in shared collision or build.
+
+### Next task
+**P2-MOVE-002 — Mouse Look & Camera Orientation**
+
+Goal:
+- capture mouse delta through the client input layer,
+- convert it into look intent data,
+- store authoritative yaw/pitch state,
+- make movement direction camera-relative,
+- keep the renderer as a view of authoritative orientation rather than a second source of truth.
+
+Not included yet:
+- sprint,
+- jump,
+- crouch,
+- slide,
+- dash.
