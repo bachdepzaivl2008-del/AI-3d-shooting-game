@@ -6,7 +6,7 @@ import { runCollisionBrowserProbe } from './client/diagnostics/runCollisionBrows
 async function bootstrap() {
   await runCollisionBrowserProbe(gameConfig)
 
-  const game = new Game(gameConfig)
+  const game = await Game.create(gameConfig)
   game.start()
 }
 

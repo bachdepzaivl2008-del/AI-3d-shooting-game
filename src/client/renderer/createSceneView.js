@@ -13,32 +13,32 @@ export function createSceneView(config) {
     config.camera.far
   )
 
-  camera.position.set(
-    config.camera.position.x,
-    config.camera.position.y,
-    config.camera.position.z
-  )
-  camera.lookAt(0, 0, 0)
-
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
   })
 
-  renderer.setSize(window.innerWidth, window.innerHeight)
+  renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+  )
+
   renderer.setPixelRatio(
     Math.min(window.devicePixelRatio, 2)
   )
 
-  document.body.appendChild(renderer.domElement)
+  document.body.appendChild(
+    renderer.domElement
+  )
 
   const groundGeometry = new THREE.PlaneGeometry(
     config.world.groundSize,
     config.world.groundSize
   )
 
-  const groundMaterial = new THREE.MeshStandardMaterial({
-    color: config.world.groundColor,
-  })
+  const groundMaterial =
+    new THREE.MeshStandardMaterial({
+      color: config.world.groundColor,
+    })
 
   const ground = new THREE.Mesh(
     groundGeometry,
@@ -54,29 +54,38 @@ export function createSceneView(config) {
     config.cube.size
   )
 
-  const cubeMaterial = new THREE.MeshStandardMaterial({
-    color: config.cube.color,
-  })
+  const cubeMaterial =
+    new THREE.MeshStandardMaterial({
+      color: config.cube.color,
+    })
 
-  const cube = new THREE.Mesh(cubeGeometry, cubeMaterial)
+  const cube = new THREE.Mesh(
+    cubeGeometry,
+    cubeMaterial
+  )
+
   scene.add(cube)
 
-  const ambientLight = new THREE.AmbientLight(
-    0xffffff,
-    config.lighting.ambientIntensity
-  )
+  const ambientLight =
+    new THREE.AmbientLight(
+      0xffffff,
+      config.lighting.ambientIntensity
+    )
+
   scene.add(ambientLight)
 
-  const directionalLight = new THREE.DirectionalLight(
-    0xffffff,
-    config.lighting.directionalIntensity
-  )
+  const directionalLight =
+    new THREE.DirectionalLight(
+      0xffffff,
+      config.lighting.directionalIntensity
+    )
 
   directionalLight.position.set(
     config.lighting.directionalPosition.x,
     config.lighting.directionalPosition.y,
     config.lighting.directionalPosition.z
   )
+
   scene.add(directionalLight)
 
   function syncFromState(state) {
@@ -86,7 +95,24 @@ export function createSceneView(config) {
       state.cube.position.z
     )
 
-    cube.rotation.y = state.cube.rotationY
+    cube.rotation.y =
+      state.cube.rotationY
+
+    const player = state.player.position
+
+    camera.position.set(
+      player.x,
+      player.y +
+        config.player.cameraEyeOffsetY,
+      player.z
+    )
+
+    camera.lookAt(
+      player.x,
+      player.y +
+        config.player.cameraEyeOffsetY,
+      player.z - 1
+    )
   }
 
   function render(state) {
@@ -96,7 +122,9 @@ export function createSceneView(config) {
 
   function handleResize() {
     camera.aspect =
-      window.innerWidth / window.innerHeight
+      window.innerWidth /
+      window.innerHeight
+
     camera.updateProjectionMatrix()
 
     renderer.setSize(
@@ -105,10 +133,16 @@ export function createSceneView(config) {
     )
   }
 
-  window.addEventListener('resize', handleResize)
+  window.addEventListener(
+    'resize',
+    handleResize
+  )
 
   function dispose() {
-    window.removeEventListener('resize', handleResize)
+    window.removeEventListener(
+      'resize',
+      handleResize
+    )
 
     groundGeometry.dispose()
     groundMaterial.dispose()

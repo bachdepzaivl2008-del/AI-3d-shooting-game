@@ -26,7 +26,8 @@ assert.equal(firstIntent.sequence, 1)
 assert.equal(secondIntent.sequence, 2)
 assert.equal(sequencer.peekNextSequence(), 3)
 
-const authority = new LocalAuthorityHost(gameConfig)
+const authority =
+  await LocalAuthorityHost.create(gameConfig)
 
 authority.submitIntent(firstIntent)
 authority.submitIntent(secondIntent)
@@ -48,18 +49,32 @@ assert.equal(state.tick, 60)
 assert.ok(nearlyEqual(state.time, 1))
 assert.ok(nearlyEqual(state.cube.rotationY, 1.5))
 assert.equal(state.cube.id, 'entity:000001')
+assert.equal(state.player.id, 'entity:000002')
+assert.equal(state.player.grounded, true)
 
-const randomA = new SeededRandom(gameConfig.simulation.randomSeed)
-const randomB = new SeededRandom(gameConfig.simulation.randomSeed)
+const randomA =
+  new SeededRandom(
+    gameConfig.simulation.randomSeed
+  )
+
+const randomB =
+  new SeededRandom(
+    gameConfig.simulation.randomSeed
+  )
 
 for (let i = 0; i < 8; i += 1) {
-  assert.equal(randomA.nextUint32(), randomB.nextUint32())
+  assert.equal(
+    randomA.nextUint32(),
+    randomB.nextUint32()
+  )
 }
 
 const ids = new StableIdAllocator('test')
 assert.equal(ids.next(), 'test:000001')
 assert.equal(ids.next(), 'test:000002')
 assert.equal(ids.peek(), 'test:000003')
+
+authority.dispose()
 
 console.log('Headless simulation test: PASS')
 console.log('Authority boundary test: PASS')
@@ -68,5 +83,6 @@ console.log({
   tick: state.tick,
   time: state.time,
   cubeId: state.cube.id,
-  cubeRotationY: state.cube.rotationY,
+  playerId: state.player.id,
+  playerPosition: state.player.position,
 })

@@ -3,10 +3,20 @@ import { createSceneView } from '../../client/renderer/createSceneView.js'
 import { BrowserInputSource } from '../../client/input/BrowserInputSource.js'
 
 export class Game {
-  constructor(config) {
-    this.config = config
+  static async create(config) {
+    const authority =
+      await LocalAuthorityHost.create(config)
 
-    this.authority = new LocalAuthorityHost(config)
+    return new Game(
+      config,
+      authority
+    )
+  }
+
+  constructor(config, authority) {
+    this.config = config
+    this.authority = authority
+
     this.sceneView = createSceneView(config)
     this.inputSource = new BrowserInputSource()
 
@@ -23,7 +33,8 @@ export class Game {
 
     this.isRunning = true
     this.lastFrameTime = performance.now()
-    this.animationFrameId = requestAnimationFrame(this.loop)
+    this.animationFrameId =
+      requestAnimationFrame(this.loop)
   }
 
   loop(now) {
@@ -54,7 +65,9 @@ export class Game {
         this.config.simulation.fixedDeltaTime
     }
 
-    this.sceneView.render(this.authority.getState())
+    this.sceneView.render(
+      this.authority.getState()
+    )
 
     this.animationFrameId =
       requestAnimationFrame(this.loop)
@@ -70,5 +83,6 @@ export class Game {
 
     this.inputSource.dispose()
     this.sceneView.dispose()
+    this.authority.dispose()
   }
 }

@@ -12,5 +12,16 @@ export function createInitialGameState(config, runtime) {
       },
       rotationY: 0,
     },
+
+    player: {
+      id: runtime.playerId,
+      position: {
+        x: runtime.playerPosition.x,
+        y: runtime.playerPosition.y,
+        z: runtime.playerPosition.z,
+      },
+      grounded: true,
+      lastInputSequence: 0,
+    },
   }
 }

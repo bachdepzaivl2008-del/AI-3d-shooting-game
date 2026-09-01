@@ -25,6 +25,23 @@ export const gameConfig = {
     },
   },
 
+  movement: {
+    // IIV technical placeholder for the first movement integration pass.
+    // This is NOT a locked balance value.
+    baseSpeed: 6,
+    groundStickPerTick: 0.02,
+  },
+
+  player: {
+    spawnPosition: {
+      x: 0,
+      y: 0.91,
+      z: 5,
+    },
+
+    cameraEyeOffsetY: 0.75,
+  },
+
   world: {
     backgroundColor: 0x87ceeb,
     groundSize: 30,
@@ -35,11 +52,6 @@ export const gameConfig = {
     fov: 75,
     near: 0.1,
     far: 1000,
-    position: {
-      x: 5,
-      y: 5,
-      z: 8,
-    },
   },
 
   lighting: {

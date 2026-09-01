@@ -2,8 +2,14 @@ import { Simulation } from './Simulation.js'
 import { IntentBuffer } from '../../shared/intents/IntentBuffer.js'
 
 export class LocalAuthorityHost {
-  constructor(config) {
-    this.simulation = new Simulation(config)
+  static async create(config) {
+    const simulation = await Simulation.create(config)
+
+    return new LocalAuthorityHost(simulation)
+  }
+
+  constructor(simulation) {
+    this.simulation = simulation
     this.intentBuffer = new IntentBuffer()
     this.lastProcessedIntentCount = 0
   }
@@ -24,5 +30,9 @@ export class LocalAuthorityHost {
 
   getLastProcessedIntentCount() {
     return this.lastProcessedIntentCount
+  }
+
+  dispose() {
+    this.simulation.dispose()
   }
 }

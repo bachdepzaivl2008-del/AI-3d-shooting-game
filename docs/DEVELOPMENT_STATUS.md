@@ -8,7 +8,7 @@
 `phase-0-architecture`
 
 ## Current phase
-**Phase 1 — Shared World & Collision Foundation**
+**Phase 2 — Authoritative Player Movement Integration**
 
 ## Phase 0
 **PASS**
@@ -64,8 +64,38 @@ A failed subsystem is either:
 
 Never silently forget a failed test.
 
+## Phase 2
+**IN PROGRESS**
+
+### P2-MOVE-001 — Authoritative base WASD movement
+**IMPLEMENTED / AWAITING VERIFICATION**
+
+Implemented:
+- authoritative player state,
+- async authority/simulation initialization for shared Rapier runtime,
+- WASD input routed through PLAYER_INPUT intents,
+- PlayerMovementSystem using the shared Rapier character controller,
+- authoritative position + grounded state,
+- client camera follows authoritative player state,
+- input sequence stored in authoritative state,
+- headless movement regression test.
+
+Current technical IIV:
+- base movement speed = 6 m/s.
+- This is an implementation placeholder for integration testing, not a locked balance value.
+
+Not included in this pass:
+- mouse look,
+- sprint,
+- jump,
+- crouch,
+- slide,
+- dash.
+
+These remain subsequent movement tasks; the GDD movement structure is unchanged.
+
 ## Next planned step
-Proceed to authoritative player movement integration:
+Verify the first authoritative movement slice:
 
 ```text
 Browser Input
@@ -88,3 +118,13 @@ First target:
 - wire WASD movement into the simulation,
 - move the Rapier capsule through the shared collision layer,
 - render/follow the authoritative position in Three.js.
+
+
+Verification commands:
+- `npm run sim:test`
+- `npm run collision:test`
+- `npm run character:test`
+- `npm run movement:test`
+- `npm run build`
+
+If all pass and browser preview moves with WASD, mark P2-MOVE-001 PASS.
