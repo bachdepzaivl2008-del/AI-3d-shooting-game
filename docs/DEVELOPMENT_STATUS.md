@@ -140,3 +140,22 @@ If all pass and browser preview moves with WASD, mark P2-MOVE-001 PASS.
 Current action:
 - isolate the actual authoritative displacement before changing implementation or thresholds,
 - keep P2-MOVE-001 OPEN until root cause is understood.
+
+
+## P2-MOVE-001 diagnostic follow-up
+Measured movement result before fix:
+- expected: 6.0 m in 1 second,
+- actual: ~5.799 m,
+- error: ~0.201 m.
+
+Root cause:
+- the temporary 0.02 m/tick downward component was too large for a snap-to-ground bias,
+- Rapier projects the full desired translation through the character-controller collision response,
+- that excessive downward component reduced planar displacement.
+
+Fix integrated:
+- base speed remains 6 m/s,
+- snap bias reduced from 0.02 m/tick to 0.001 m/tick,
+- movement-test tolerance is unchanged.
+
+This is a technical controller correction, not a balance change.
