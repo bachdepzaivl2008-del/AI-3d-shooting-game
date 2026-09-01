@@ -11,6 +11,8 @@ assert.equal(
 
 const result = await runCharacterCollisionSuite(gameConfig)
 
+console.dir(result, { depth: null })
+
 assert.equal(
   result.groundWallDash.groundRayHit,
   true,

@@ -138,32 +138,35 @@ async function runRampScenario(config) {
 
     const angleDegrees = 35
     const angle = (angleDegrees * Math.PI) / 180
-    const halfLength = 1.5
-    const halfThickness = 0.1
+    const rampStartX = 0.6
+    const rampEndX = 3.4
+    const rampWidth = 2
+    const rise =
+      Math.tan(angle) * (rampEndX - rampStartX)
 
-    const center = {
-      x:
-        0.6 +
-        halfLength * Math.cos(angle) +
-        halfThickness * Math.sin(angle),
-      y:
-        halfLength * Math.sin(angle) -
-        halfThickness * Math.cos(angle),
-      z: 0,
-    }
+    collision.createStaticTrimesh({
+      vertices: [
+        rampStartX, 0, -rampWidth,
+        rampEndX, rise, -rampWidth,
+        rampEndX, rise, rampWidth,
+        rampStartX, 0, rampWidth,
+      ],
+      indices: [
+        0, 1, 2,
+        0, 2, 3,
+      ],
+    })
 
     collision.createStaticBox({
-      center,
-      halfExtents: {
-        x: halfLength,
-        y: halfThickness,
-        z: 1,
+      center: {
+        x: 5.2,
+        y: rise - 0.5,
+        z: 0,
       },
-      rotation: {
-        w: Math.cos(angle / 2),
-        x: 0,
-        y: 0,
-        z: Math.sin(angle / 2),
+      halfExtents: {
+        x: 1.8,
+        y: 0.5,
+        z: rampWidth,
       },
     })
 
@@ -176,6 +179,8 @@ async function runRampScenario(config) {
     collision.prepareQueries()
 
     let finalPosition = character.body.translation()
+    let maxY = finalPosition.y
+    let firstRiseTick = null
 
     for (let i = 0; i < 100; i += 1) {
       const movement = collision.computeCharacterMovement(
@@ -188,15 +193,28 @@ async function runRampScenario(config) {
           character,
           movement
         )
+
+      maxY = Math.max(maxY, finalPosition.y)
+
+      if (
+        firstRiseTick === null &&
+        finalPosition.y > standingCenterY(config) + 0.05
+      ) {
+        firstRiseTick = i + 1
+      }
     }
 
     return {
+      rampGeometry: 'trimesh',
       rampDegrees: angleDegrees,
+      rampRise: rise,
       finalX: finalPosition.x,
       finalY: finalPosition.y,
+      maxY,
+      firstRiseTick,
       climbedWalkableRamp:
-        finalPosition.x > 2.0 &&
-        finalPosition.y > standingCenterY(config) + 0.5,
+        finalPosition.x > 2.5 &&
+        maxY > standingCenterY(config) + 0.5,
     }
   } finally {
     collision.dispose()

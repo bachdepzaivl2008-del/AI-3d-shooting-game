@@ -28,6 +28,15 @@ export class RapierCollisionWorld {
     return this.world.createCollider(desc)
   }
 
+  createStaticTrimesh({ vertices, indices }) {
+    const desc = this.RAPIER.ColliderDesc.trimesh(
+      new Float32Array(vertices),
+      new Uint32Array(indices)
+    )
+
+    return this.world.createCollider(desc)
+  }
+
   createKinematicCapsule({
     position,
     totalHeight,
