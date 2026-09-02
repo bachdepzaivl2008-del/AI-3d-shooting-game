@@ -228,3 +228,44 @@ Non-blocking deferred issue:
 - This is a presentation/balance-feel item for later playtest/weapon-feel passes, not a locomotion correctness blocker.
 
 Proceeding to the next canonical Stage 1 item: Crouch.
+
+
+## P2-MOVE-004 — Crouch & Camera Eye Height
+**IMPLEMENTED / AWAITING VERIFICATION**
+
+Canonical Core Gameplay 68B–68C values:
+- Crouch movement = 0.60x current weapon Normal Movement Speed,
+- AR/Base crouch speed = 3.30 m/s,
+- Standing capsule = 1.80 m total height / 0.35 m radius,
+- Crouch capsule = 1.20 m total height / 0.35 m radius,
+- Standing eye height = 1.62 m,
+- Crouch eye height = 1.00 m,
+- standing is forbidden when standing-capsule head-clearance test fails.
+
+Implemented:
+- Ctrl drives authoritative crouch request,
+- feet-preserving runtime capsule resize,
+- exact standing-capsule shape-overlap clearance query,
+- blocked stand keeps crouch active and exposes standBlocked,
+- crouch movement multiplier,
+- Sprint cannot remain active while crouched,
+- authoritative crouched / standBlocked state,
+- presentation-only smooth camera eye-height transition,
+- debug overlay CROUCHED / STAND BLOCKED,
+- crouch:test including low-ceiling stand-block contract.
+
+Implementation-owned presentation value:
+- camera eye transition rate = 14 / s.
+This is not a gameplay balance constant and does not alter authoritative stance timing.
+
+Verification required:
+- npm run crouch:test
+- npm run sprint:test
+- npm run velocity:test
+- npm run movement:test
+- npm run look:test
+- npm run foundation:test
+- npm run collision:test
+- npm run character:test
+- npm run build
+- browser: Ctrl lowers camera, movement slows to ~3.30 m/s, CROUCHED true, release returns standing in clear space.
