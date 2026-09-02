@@ -36,6 +36,25 @@ export function createSceneView(config) {
     renderer.domElement
   )
 
+  const characterConfig =
+    config.collision.character
+
+  const standingEyeOffset =
+    config.player.standingEyeHeight -
+    characterConfig.standingHeight / 2 -
+    characterConfig.controllerOffset
+
+  const crouchEyeOffset =
+    config.player.crouchEyeHeight -
+    characterConfig.crouchHeight / 2 -
+    characterConfig.controllerOffset
+
+  let currentEyeOffset =
+    standingEyeOffset
+
+  let lastRenderTime =
+    performance.now()
+
   const groundGeometry =
     new THREE.PlaneGeometry(
       config.world.groundSize,
@@ -117,9 +136,36 @@ export function createSceneView(config) {
     const orientation =
       state.player.orientation
 
+    const now = performance.now()
+    const deltaTime =
+      Math.min(
+        (now - lastRenderTime) / 1000,
+        0.1
+      )
+
+    lastRenderTime = now
+
+    const targetEyeOffset =
+      state.player.crouched
+        ? crouchEyeOffset
+        : standingEyeOffset
+
+    const transitionAlpha =
+      1 -
+      Math.exp(
+        -config.player
+          .cameraEyeTransitionRate *
+        deltaTime
+      )
+
+    currentEyeOffset +=
+      (targetEyeOffset -
+        currentEyeOffset) *
+      transitionAlpha
+
     const eyeY =
       player.y +
-      config.player.cameraEyeOffsetY
+      currentEyeOffset
 
     camera.position.set(
       player.x,
