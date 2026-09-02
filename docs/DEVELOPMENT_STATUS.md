@@ -118,3 +118,26 @@ Fix integrated:
 
 No gameplay values or test tolerances were relaxed.
 P2-MOVE-003 remains OPEN until the full regression passes at canonical 5.5 / 6.875 m/s.
+
+
+## P2-MOVE-003 grounding-bias isolation result
+Dedicated `movement-grounding:probe` isolated the remaining movement loss.
+
+Key results:
+- bias = 0:
+  - normal: ~5.5000 m / 1 s, 60/60 grounded ticks, 0 anomalies,
+  - sprint: ~6.8750 m / 1 s, 60/60 grounded ticks, 0 anomalies.
+- positive synthetic downward biases produced speed-sensitive partial/zero planar ticks; the canonical runtime value 0.001 reproduced the ~5.319 m normal-movement failure.
+- larger biases degraded displacement further.
+
+Conclusion:
+- Rapier's configured snap-to-ground already maintains grounded state for flat authoritative locomotion,
+- the additional synthetic downward movement component is not required and is the direct cause of the intermittent planar movement loss at canonical speeds.
+
+Fix:
+- runtime `groundSnapBiasPerTick` = 0,
+- no GDD speed value changed,
+- no test tolerance relaxed,
+- shared CharacterController snap-to-ground remains enabled.
+
+P2-MOVE-003 remains OPEN until sprint/movement/look/full regression + browser verification pass.
