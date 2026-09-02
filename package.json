@@ -21,7 +21,8 @@
     "velocity:test": "node scripts/player-velocity-test.js",
     "crouch:test": "node scripts/player-crouch-test.js",
     "jump:test": "node scripts/player-jump-test.js",
-    "landing:test": "node scripts/player-landing-test.js"
+    "landing:test": "node scripts/player-landing-test.js",
+    "slide:test": "node scripts/player-slide-test.js"
   },
   "devDependencies": {
     "vite": "^8.2.0"
