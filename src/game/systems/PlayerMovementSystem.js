@@ -128,6 +128,65 @@ export class PlayerMovementSystem {
     this.collision = collision
     this.character = character
     this.lastGrounded = true
+    this.crouched = false
+  }
+
+  updateStance(crouchRequested) {
+    const characterConfig =
+      this.config.collision.character
+
+    if (
+      crouchRequested &&
+      this.lastGrounded &&
+      !this.crouched
+    ) {
+      this.collision.setCharacterHeight(
+        this.character,
+        characterConfig.crouchHeight
+      )
+
+      this.crouched = true
+
+      return {
+        crouched: true,
+        standBlocked: false,
+      }
+    }
+
+    if (
+      !crouchRequested &&
+      this.crouched
+    ) {
+      const canStand =
+        this.collision.canResizeCharacterHeight(
+          this.character,
+          characterConfig.standingHeight
+        )
+
+      if (canStand) {
+        this.collision.setCharacterHeight(
+          this.character,
+          characterConfig.standingHeight
+        )
+
+        this.crouched = false
+
+        return {
+          crouched: false,
+          standBlocked: false,
+        }
+      }
+
+      return {
+        crouched: true,
+        standBlocked: true,
+      }
+    }
+
+    return {
+      crouched: this.crouched,
+      standBlocked: false,
+    }
   }
 
   update(input, deltaTime, yaw) {
@@ -136,6 +195,14 @@ export class PlayerMovementSystem {
 
     const moveForward =
       clampAxis(input?.moveY ?? 0)
+
+    const crouchRequested =
+      input?.crouch === true
+
+    const stance =
+      this.updateStance(
+        crouchRequested
+      )
 
     const direction =
       cameraRelativeDirection(
@@ -155,7 +222,8 @@ export class PlayerMovementSystem {
 
     const sprinting =
       hasPlanarMovement &&
-      sprintRequested
+      sprintRequested &&
+      !stance.crouched
 
     if (!hasPlanarMovement) {
       // Critical invariant:
@@ -172,6 +240,8 @@ export class PlayerMovementSystem {
         position: this.getPosition(),
         grounded: this.lastGrounded,
         sprinting: false,
+        crouched: stance.crouched,
+        standBlocked: stance.standBlocked,
         input: {
           moveX,
           moveY: moveForward,
@@ -185,10 +255,13 @@ export class PlayerMovementSystem {
     }
 
     const speedMultiplier =
-      sprinting
+      stance.crouched
         ? this.config.movement
-            .sprintMultiplier
-        : 1
+            .crouchMultiplier
+        : sprinting
+          ? this.config.movement
+              .sprintMultiplier
+          : 1
 
     const distance =
       this.config.movement.baseSpeed *
@@ -222,6 +295,8 @@ export class PlayerMovementSystem {
       position,
       grounded: this.lastGrounded,
       sprinting,
+      crouched: stance.crouched,
+      standBlocked: stance.standBlocked,
       input: {
         moveX,
         moveY: moveForward,
