@@ -8,10 +8,6 @@ const testConfig = {
   ...gameConfig,
   cube: {
     ...gameConfig.cube,
-    // Keep the debug cube out of the open-ground velocity fixture.
-    // The default spawn at z=5 moving yaw=0 forward reaches the
-    // cube at the origin within one second and turns this into a
-    // collision/autostep test instead of a pure velocity test.
     startPosition: {
       x: 100,
       y: gameConfig.cube.startPosition.y,
@@ -20,49 +16,24 @@ const testConfig = {
   },
 }
 
-const DT = testConfig.simulation.fixedDeltaTime
-const NORMAL_SPEED = testConfig.movement.baseSpeed
+const NORMAL_SPEED =
+  testConfig.movement.baseSpeed
+
 const SPRINT_SPEED =
   testConfig.movement.baseSpeed *
   testConfig.movement.sprintMultiplier
 
-function nearlyEqual(actual, expected, epsilon = 0.02) {
-  return Math.abs(actual - expected) <= epsilon
+const EPSILON = 0.02
+
+function nearlyEqual(actual, expected) {
+  return Math.abs(actual - expected) <= EPSILON
 }
 
 function degToMouseDelta(degrees) {
-  const radians = degrees * Math.PI / 180
   return (
-    radians /
+    degrees * Math.PI / 180 /
     testConfig.look.mouseSensitivityRadiansPerPixel
   )
-}
-
-async function createHarness(sourceId, yawDegrees = 0) {
-  const authority =
-    await LocalAuthorityHost.create(testConfig)
-
-  const sequencer =
-    new IntentSequencer(sourceId)
-
-  if (yawDegrees !== 0) {
-    authority.submitIntent(
-      sequencer.create('PLAYER_INPUT', {
-        moveX: 0,
-        moveY: 0,
-        lookDeltaX:
-          degToMouseDelta(yawDegrees),
-        lookDeltaY: 0,
-        sprint: false,
-        jump: false,
-        crouch: false,
-      })
-    )
-
-    authority.step()
-  }
-
-  return { authority, sequencer }
 }
 
 function expectedVelocity({
@@ -71,7 +42,8 @@ function expectedVelocity({
   moveY,
   speed,
 }) {
-  const yaw = yawDegrees * Math.PI / 180
+  const yaw =
+    yawDegrees * Math.PI / 180
 
   const rightX = Math.cos(yaw)
   const rightZ = Math.sin(yaw)
@@ -100,22 +72,83 @@ function expectedVelocity({
   }
 }
 
-async function runCase({
-  name,
-  yawDegrees,
-  moveX,
-  moveY,
-  sprint,
-  ticks = 60,
-}) {
-  const { authority, sequencer } =
-    await createHarness(
-      `velocity:${name}`,
-      yawDegrees
+async function createHarness(
+  sourceId,
+  yawDegrees = 0
+) {
+  const authority =
+    await LocalAuthorityHost.create(
+      testConfig
     )
 
+  const sequencer =
+    new IntentSequencer(sourceId)
+
+  if (yawDegrees !== 0) {
+    authority.submitIntent(
+      sequencer.create(
+        'PLAYER_INPUT',
+        {
+          moveX: 0,
+          moveY: 0,
+          lookDeltaX:
+            degToMouseDelta(
+              yawDegrees
+            ),
+          lookDeltaY: 0,
+          sprint: false,
+          jump: false,
+          crouch: false,
+        }
+      )
+    )
+
+    authority.step()
+  }
+
+  return {
+    authority,
+    sequencer,
+  }
+}
+
+function range(samples, key) {
+  const values =
+    samples.map((sample) => {
+      if (key === 'speed') {
+        return sample.planarSpeed
+      }
+
+      return sample.velocity[key]
+    })
+
+  return {
+    min: Math.min(...values),
+    max: Math.max(...values),
+  }
+}
+
+async function runCase(testCase) {
+  const {
+    name,
+    yawDegrees,
+    moveX,
+    moveY,
+    sprint,
+  } = testCase
+
+  const {
+    authority,
+    sequencer,
+  } = await createHarness(
+    `velocity:${name}`,
+    yawDegrees
+  )
+
   const targetSpeed =
-    sprint ? SPRINT_SPEED : NORMAL_SPEED
+    sprint
+      ? SPRINT_SPEED
+      : NORMAL_SPEED
 
   const expected =
     expectedVelocity({
@@ -126,18 +159,26 @@ async function runCase({
     })
 
   const samples = []
+  const failures = []
 
-  for (let tick = 1; tick <= ticks; tick += 1) {
+  for (
+    let tick = 1;
+    tick <= 60;
+    tick += 1
+  ) {
     authority.submitIntent(
-      sequencer.create('PLAYER_INPUT', {
-        moveX,
-        moveY,
-        lookDeltaX: 0,
-        lookDeltaY: 0,
-        sprint,
-        jump: false,
-        crouch: false,
-      })
+      sequencer.create(
+        'PLAYER_INPUT',
+        {
+          moveX,
+          moveY,
+          lookDeltaX: 0,
+          lookDeltaY: 0,
+          sprint,
+          jump: false,
+          crouch: false,
+        }
+      )
     )
 
     authority.step()
@@ -159,107 +200,132 @@ async function runCase({
       tick,
       velocity,
       planarSpeed,
-      grounded: player.grounded,
-      sprinting: player.sprinting,
+      grounded:
+        player.grounded,
+      sprinting:
+        player.sprinting,
     })
 
-    assert.ok(
-      nearlyEqual(velocity.x, expected.x),
-      `${name}: velocity X must remain stable and match expected world-axis value`
-    )
+    const checks = [
+      ['x', velocity.x, expected.x],
+      ['y', velocity.y, expected.y],
+      ['z', velocity.z, expected.z],
+      [
+        'speed',
+        planarSpeed,
+        targetSpeed,
+      ],
+    ]
 
-    assert.ok(
-      nearlyEqual(velocity.y, expected.y),
-      `${name}: grounded velocity Y must stay near zero`
-    )
+    for (
+      const [
+        axis,
+        actual,
+        expectedValue,
+      ] of checks
+    ) {
+      if (
+        !nearlyEqual(
+          actual,
+          expectedValue
+        )
+      ) {
+        failures.push({
+          tick,
+          axis,
+          actual,
+          expected:
+            expectedValue,
+        })
+      }
+    }
 
-    assert.ok(
-      nearlyEqual(velocity.z, expected.z),
-      `${name}: velocity Z must remain stable and match expected world-axis value`
-    )
+    if (!player.grounded) {
+      failures.push({
+        tick,
+        axis: 'grounded',
+        actual: false,
+        expected: true,
+      })
+    }
 
-    assert.ok(
-      nearlyEqual(planarSpeed, targetSpeed),
-      `${name}: planar SPEED must remain stable`
-    )
-
-    assert.equal(
-      player.grounded,
-      true,
-      `${name}: player must remain grounded on flat ground`
-    )
-
-    assert.equal(
-      player.sprinting,
-      sprint,
-      `${name}: authoritative sprinting state mismatch`
-    )
+    if (
+      player.sprinting !== sprint
+    ) {
+      failures.push({
+        tick,
+        axis: 'sprinting',
+        actual:
+          player.sprinting,
+        expected: sprint,
+      })
+    }
   }
 
   authority.submitIntent(
-    sequencer.create('PLAYER_INPUT', {
-      moveX: 0,
-      moveY: 0,
-      lookDeltaX: 0,
-      lookDeltaY: 0,
-      sprint,
-      jump: false,
-      crouch: false,
-    })
+    sequencer.create(
+      'PLAYER_INPUT',
+      {
+        moveX: 0,
+        moveY: 0,
+        lookDeltaX: 0,
+        lookDeltaY: 0,
+        sprint,
+        jump: false,
+        crouch: false,
+      }
+    )
   )
 
   authority.step()
 
   const idleVelocity = {
-    ...authority.getState().player.velocity,
+    ...authority.getState()
+      .player.velocity,
   }
 
-  assert.ok(
-    nearlyEqual(idleVelocity.x, 0),
-    `${name}: velocity X must return to zero on idle`
-  )
-
-  assert.ok(
-    nearlyEqual(idleVelocity.y, 0),
-    `${name}: velocity Y must return to zero on idle`
-  )
-
-  assert.ok(
-    nearlyEqual(idleVelocity.z, 0),
-    `${name}: velocity Z must return to zero on idle`
-  )
-
-  const minMax = {
-    x: {
-      min: Math.min(...samples.map((s) => s.velocity.x)),
-      max: Math.max(...samples.map((s) => s.velocity.x)),
-    },
-    y: {
-      min: Math.min(...samples.map((s) => s.velocity.y)),
-      max: Math.max(...samples.map((s) => s.velocity.y)),
-    },
-    z: {
-      min: Math.min(...samples.map((s) => s.velocity.z)),
-      max: Math.max(...samples.map((s) => s.velocity.z)),
-    },
-    speed: {
-      min: Math.min(...samples.map((s) => s.planarSpeed)),
-      max: Math.max(...samples.map((s) => s.planarSpeed)),
-    },
+  for (
+    const axis of ['x', 'y', 'z']
+  ) {
+    if (
+      !nearlyEqual(
+        idleVelocity[axis],
+        0
+      )
+    ) {
+      failures.push({
+        tick: 'idle',
+        axis,
+        actual:
+          idleVelocity[axis],
+        expected: 0,
+      })
+    }
   }
 
-  authority.dispose()
-
-  return {
+  const result = {
     name,
     yawDegrees,
     moveX,
     moveY,
     sprint,
     expected,
-    minMax,
+    ranges: {
+      x: range(samples, 'x'),
+      y: range(samples, 'y'),
+      z: range(samples, 'z'),
+      speed:
+        range(samples, 'speed'),
+    },
     idleVelocity,
+    failureCount:
+      failures.length,
+    failures:
+      failures.slice(0, 20),
   }
+
+  authority.dispose()
+  return result
 }
 
 const cases = [
@@ -336,16 +402,33 @@ for (const testCase of cases) {
   )
 }
 
-console.log(
-  'Authoritative velocity XYZ test: PASS'
-)
+const totalFailures =
+  results.reduce(
+    (sum, result) =>
+      sum +
+      result.failureCount,
+    0
+  )
 
 console.dir(
   {
-    normalSpeed: NORMAL_SPEED,
-    sprintSpeed: SPRINT_SPEED,
-    deltaTime: DT,
+    normalSpeed:
+      NORMAL_SPEED,
+    sprintSpeed:
+      SPRINT_SPEED,
+    epsilon:
+      EPSILON,
     results,
   },
   { depth: null }
+)
+
+assert.equal(
+  totalFailures,
+  0,
+  `Velocity XYZ regression found ${totalFailures} failure(s); inspect per-case output above`
+)
+
+console.log(
+  'Authoritative velocity XYZ test: PASS'
 )
