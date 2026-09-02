@@ -90,3 +90,31 @@ Verification required:
 - npm run character:test
 - npm run build
 - browser: hold Shift + WASD, confirm visible speed increase and SPRINTING: true.
+
+
+## P2-MOVE-003 regression failure — root cause correction
+First canonical-speed verification failed:
+- sprint:test: FAIL,
+- movement:test: FAIL,
+- look:test: FAIL,
+- foundation/collision/character/build continued to pass.
+
+Measured normal movement at 5.5 m/s:
+- expected ≈ 5.5 m in 1 s,
+- actual ≈ 5.319 m,
+- per-tick trace showed intermittent zero/partial grounded movement ticks.
+
+Interpretation:
+- this is not a Sprint multiplier bug,
+- changing from the temporary 6.0 m/s placeholder to the canonical 5.5 m/s exposed a speed-sensitive instability already latent in the shared character-application path,
+- the old wrapper drove CharacterController through a position-based kinematic rigid body, then stepped Rapier,
+- the previously proven minimal slope/ramp probes use a standalone collider moved directly after CharacterController correction and do not exhibit this extra rigid-body contact-resolution layer.
+
+Fix integrated:
+- shared character capsule is now a standalone Rapier collider,
+- CharacterController corrected movement is applied directly with collider.setTranslation(),
+- shared getCharacterPosition() is now the single position accessor,
+- PlayerMovementSystem and character collision regression suite use the same accessor.
+
+No gameplay values or test tolerances were relaxed.
+P2-MOVE-003 remains OPEN until the full regression passes at canonical 5.5 / 6.875 m/s.
