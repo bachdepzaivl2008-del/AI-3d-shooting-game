@@ -164,6 +164,90 @@ export class PlayerMovementSystem {
 
     this.airborneSpeedCap =
       config.movement.baseSpeed
+
+    this.landingRecoveryRemaining = 0
+    this.landingRecoveryDuration = 0
+    this.landingRecoveryStartMultiplier = 1
+    this.landingType = 'none'
+    this.lastLandingImpactSpeed = 0
+  }
+
+  getLandingRecoveryMultiplier() {
+    if (
+      this.landingRecoveryRemaining <= 0 ||
+      this.landingRecoveryDuration <= 0
+    ) {
+      return 1
+    }
+
+    const progress =
+      1 -
+      this.landingRecoveryRemaining /
+        this.landingRecoveryDuration
+
+    return (
+      this.landingRecoveryStartMultiplier +
+      (1 -
+        this.landingRecoveryStartMultiplier) *
+        progress
+    )
+  }
+
+  advanceLandingRecovery(deltaTime) {
+    if (
+      this.landingRecoveryRemaining <= 0
+    ) {
+      return
+    }
+
+    this.landingRecoveryRemaining =
+      Math.max(
+        0,
+        this.landingRecoveryRemaining -
+          deltaTime
+      )
+
+    if (
+      this.landingRecoveryRemaining === 0
+    ) {
+      this.landingRecoveryDuration = 0
+      this.landingRecoveryStartMultiplier = 1
+      this.landingType = 'none'
+    }
+  }
+
+  triggerLandingRecovery(impactSpeed) {
+    const movementConfig =
+      this.config.movement
+
+    const hardLanding =
+      impactSpeed >=
+      movementConfig.hardLandingImpactSpeed
+
+    this.landingType =
+      hardLanding
+        ? 'hard'
+        : 'standard'
+
+    this.lastLandingImpactSpeed =
+      impactSpeed
+
+    this.landingRecoveryStartMultiplier =
+      hardLanding
+        ? movementConfig
+            .hardLandingRetainMultiplier
+        : movementConfig
+            .standardLandingRetainMultiplier
+
+    this.landingRecoveryDuration =
+      hardLanding
+        ? movementConfig
+            .hardLandingRecoverySeconds
+        : movementConfig
+            .standardLandingRecoverySeconds
+
+    this.landingRecoveryRemaining =
+      this.landingRecoveryDuration
   }
 
   updateStance(crouchRequested) {
@@ -259,24 +343,25 @@ export class PlayerMovementSystem {
   computeGroundSpeed({
     sprinting,
     crouched,
+    landingRecoveryMultiplier = 1,
   }) {
+    let baseSpeed =
+      this.config.movement.baseSpeed
+
     if (crouched) {
-      return (
-        this.config.movement.baseSpeed *
+      baseSpeed *=
         this.config.movement
           .crouchMultiplier
-      )
-    }
-
-    if (sprinting) {
-      return (
-        this.config.movement.baseSpeed *
+    } else if (sprinting) {
+      baseSpeed *=
         this.config.movement
           .sprintMultiplier
-      )
     }
 
-    return this.config.movement.baseSpeed
+    return (
+      baseSpeed *
+      landingRecoveryMultiplier
+    )
   }
 
   updateAirVelocity(
@@ -337,6 +422,11 @@ export class PlayerMovementSystem {
   }
 
   update(input, deltaTime, yaw) {
+    let landedThisTick = false
+
+    const landingRecoveryMultiplier =
+      this.getLandingRecoveryMultiplier()
+
     const moveX =
       clampAxis(input?.moveX ?? 0)
 
@@ -404,6 +494,7 @@ export class PlayerMovementSystem {
           this.computeGroundSpeed({
             sprinting,
             crouched: false,
+            landingRecoveryMultiplier,
           })
 
         this.airVelocity = {
@@ -438,6 +529,9 @@ export class PlayerMovementSystem {
       !airborne
     ) {
       this.collision.step()
+      this.advanceLandingRecovery(
+        deltaTime
+      )
 
       return {
         position: this.getPosition(),
@@ -447,7 +541,16 @@ export class PlayerMovementSystem {
         standBlocked:
           stance.standBlocked,
         jumpedThisTick: false,
+        landedThisTick: false,
         verticalVelocity: 0,
+        landingType:
+          this.landingType,
+        landingRecoveryMultiplier:
+          this.getLandingRecoveryMultiplier(),
+        landingRecoveryRemaining:
+          this.landingRecoveryRemaining,
+        landingImpactSpeed:
+          this.lastLandingImpactSpeed,
         input: {
           moveX,
           moveY: moveForward,
@@ -465,6 +568,7 @@ export class PlayerMovementSystem {
         sprinting,
         crouched:
           stance.crouched,
+        landingRecoveryMultiplier,
       })
 
     const requestedAirSpeed =
@@ -533,6 +637,22 @@ export class PlayerMovementSystem {
       airborne
 
     if (landed) {
+      landedThisTick = true
+
+      const impactSpeed =
+        Math.max(
+          0,
+          -(
+            this.verticalVelocity -
+            this.config.movement.gravity *
+              deltaTime
+          )
+        )
+
+      this.triggerLandingRecovery(
+        impactSpeed
+      )
+
       this.lastGrounded = true
       this.verticalVelocity = 0
 
@@ -583,6 +703,12 @@ export class PlayerMovementSystem {
       }
     }
 
+    if (!landedThisTick) {
+      this.advanceLandingRecovery(
+        deltaTime
+      )
+    }
+
     return {
       position,
       grounded: this.lastGrounded,
@@ -594,8 +720,17 @@ export class PlayerMovementSystem {
       standBlocked:
         stance.standBlocked,
       jumpedThisTick,
+      landedThisTick,
       verticalVelocity:
         this.verticalVelocity,
+      landingType:
+        this.landingType,
+      landingRecoveryMultiplier:
+        this.getLandingRecoveryMultiplier(),
+      landingRecoveryRemaining:
+        this.landingRecoveryRemaining,
+      landingImpactSpeed:
+        this.lastLandingImpactSpeed,
       input: {
         moveX,
         moveY: moveForward,
