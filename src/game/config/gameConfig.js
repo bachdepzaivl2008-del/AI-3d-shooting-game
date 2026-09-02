@@ -34,9 +34,10 @@ export const gameConfig = {
     // Sprint = 1.25x current weapon Normal Movement Speed.
     sprintMultiplier: 1.25,
 
-    // Rapier snap-to-ground requires a slight downward component.
-    // Keep the bias tiny so it doesn't materially reduce planar speed.
-    groundSnapBiasPerTick: 0.001,
+    // Runtime movement uses Rapier's built-in snap-to-ground directly.
+    // The diagnostic sweep proved that any synthetic downward bias can
+    // intermittently shorten/zero planar movement ticks at canonical speeds.
+    groundSnapBiasPerTick: 0,
   },
 
   look: {
