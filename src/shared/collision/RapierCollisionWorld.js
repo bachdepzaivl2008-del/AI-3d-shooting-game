@@ -220,8 +220,6 @@ export class RapierCollisionWorld {
     character.totalHeight =
       totalHeight
 
-    this.world.step()
-
     return this.getCharacterPosition(
       character
     )
