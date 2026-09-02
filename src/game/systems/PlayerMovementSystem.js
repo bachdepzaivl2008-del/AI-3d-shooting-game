@@ -235,14 +235,9 @@ export class PlayerMovementSystem {
   }
 
   getPosition() {
-    const position =
-      this.character.body.translation()
-
-    return {
-      x: position.x,
-      y: position.y,
-      z: position.z,
-    }
+    return this.collision.getCharacterPosition(
+      this.character
+    )
   }
 
   dispose() {
