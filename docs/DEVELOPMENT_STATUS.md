@@ -291,3 +291,21 @@ Fix integrated:
 - do not change sensitivity, base speed, collision settings, or test tolerance.
 
 This is numerical canonicalization at the input-to-physics boundary, not a gameplay/balance change.
+
+
+## P2-MOVE-002 diagnostic correction
+Canonicalizing near-zero camera-relative components did not remove the isolated zero-displacement tick.
+The anomalous tick moved from 13 to 59, which means the prior floating-point-residue hypothesis is not sufficient.
+
+Current conclusion:
+- yaw basis remains correct,
+- one isolated physics/movement tick can still be lost,
+- the failure may be caused by the idle/look-only prelude tick rather than mouse-look math itself.
+
+Next action:
+- run a three-case transition probe:
+  1. fresh world-axis movement,
+  2. one neutral idle tick then world-axis movement,
+  3. one yaw-only tick then camera-relative movement.
+
+This will isolate whether the issue is a generic idle→move transition or specifically look-related.
