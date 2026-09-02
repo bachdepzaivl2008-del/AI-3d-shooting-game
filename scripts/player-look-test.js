@@ -125,6 +125,10 @@ const start = {
 
 const stepSamples = []
 let previousPosition = { ...start }
+let minDeltaX = Infinity
+let minDeltaXTick = null
+let lowMovementTickCount = 0
+let summedDeltaX = 0
 
 for (
   let tick = 0;
@@ -151,18 +155,26 @@ for (
       .player
       .position
 
-  if (
-    tick < 5 ||
-    tick === 59
-  ) {
+  const stepDeltaX =
+    current.x - previousPosition.x
+
+  const stepDeltaZ =
+    current.z - previousPosition.z
+
+  summedDeltaX += stepDeltaX
+
+  if (stepDeltaX < minDeltaX) {
+    minDeltaX = stepDeltaX
+    minDeltaXTick = tick + 1
+  }
+
+  if (stepDeltaX < 0.09) {
+    lowMovementTickCount += 1
+
     stepSamples.push({
       tick: tick + 1,
-      deltaX:
-        current.x -
-        previousPosition.x,
-      deltaZ:
-        current.z -
-        previousPosition.z,
+      deltaX: stepDeltaX,
+      deltaZ: stepDeltaZ,
       position: {
         x: current.x,
         y: current.y,
@@ -208,7 +220,11 @@ const movementDiagnostic = {
     (moved.orientation.yaw *
       180) /
     Math.PI,
-  stepSamples,
+  minDeltaX,
+  minDeltaXTick,
+  lowMovementTickCount,
+  summedDeltaX,
+  anomalousSteps: stepSamples,
 }
 
 console.log(

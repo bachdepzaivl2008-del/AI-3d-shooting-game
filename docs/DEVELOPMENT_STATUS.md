@@ -251,3 +251,22 @@ Interpretation:
 
 Next diagnostic:
 - record the first five and final per-tick authoritative displacements to locate which tick loses movement.
+
+
+## P2-MOVE-002 per-tick trace result
+Observed samples:
+- tick 1-5: ~0.1 m each,
+- tick 60: ~0.1 m,
+- yaw remains exactly 90°,
+- player remains grounded.
+
+Conclusion:
+- there is likely one isolated mid-run displacement anomaly,
+- camera-relative basis is not the failure.
+
+Next diagnostic is compact:
+- minimum per-tick deltaX,
+- tick index of minimum,
+- count of ticks below 0.09 m,
+- summed deltaX,
+- only anomalous tick details.
