@@ -11,7 +11,7 @@
 **STAGE 1 — PLAYER CONTROLLER & MOVEMENT SANDBOX (IN PROGRESS)**
 
 ## Formal Stage 0 close
-**AWAITING FINAL VERIFICATION**
+**PASS / CLOSED ✅**
 
 Previously verified foundation:
 - Three.js client separated from simulation
@@ -32,15 +32,26 @@ Remaining locked Stage 0 foundation pieces are now implemented:
 - browser debug overlay showing FPS, simulation tick, player position/derived velocity, yaw/pitch, grounded state and input sequence,
 - dedicated headless Stage 0 foundation test.
 
-Stage 0 status: **AWAITING FINAL VERIFICATION**.
-Do not mark Stage 0 CLOSED until the foundation regression + browser checklist passes.
+Stage 0 status: **PASS / CLOSED ✅**.
+
+Final verification confirmed:
+- foundation:test PASS
+- sim:test PASS
+- collision:test PASS
+- character:test PASS
+- movement:test PASS
+- look:test PASS
+- build PASS
+- browser dev server boots normally
+- debug overlay is visible and updates
+- first-person mouse look + WASD remain operational
 
 ## Stage 1 completed slices
 - P2-MOVE-001 — Authoritative Base WASD Movement: PASS / CLOSED
 - P2-MOVE-002 — Mouse Look & Camera Orientation: PASS / CLOSED
 - Collision foundation regression: PASS
 
-## Next after Stage 0 formal close
-**P2-MOVE-003 — Infinite Sprint**
+## Current task
+**P2-MOVE-003 — Infinite Sprint (OPEN / IN IMPLEMENTATION)**
 
 Rule: a FAIL blocks the next dependent implementation unless explicitly registered as non-blocking PASS WITH ISSUES.
