@@ -38,6 +38,11 @@ export function createInitialGameState(config, runtime) {
       landingRecoveryMultiplier: 1,
       landingRecoveryRemaining: 0,
       landingImpactSpeed: 0,
+      sliding: false,
+      slideSpeed: 0,
+      slideElapsed: 0,
+      slideExitReason: 'none',
+      slideSlopeAcceleration: 0,
       lastInputSequence: 0,
     },
   }
