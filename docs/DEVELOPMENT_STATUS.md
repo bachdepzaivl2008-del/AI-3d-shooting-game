@@ -332,3 +332,21 @@ Rationale:
 - snap-to-ground is needed while traversing horizontally across ground changes,
 - an idle character does not need a synthetic downward translation,
 - removing idle bias avoids perturbing the grounded controller state before movement begins.
+
+
+## P2-MOVE-002 definitive idle-transition fix
+The prior change removed the explicit downward bias on idle ticks, but the transition probe still failed.
+
+Root cause refined:
+- even with a zero desired translation, idle/look-only ticks were still calling
+  `computeColliderMovement` and `setNextKinematicTranslation`,
+- Rapier could slightly re-resolve the grounded kinematic contact on those no-op controller ticks,
+- after such a prelude, later movement showed intermittent partial/zero horizontal displacement.
+
+Definitive fix:
+- idle/look-only ticks no longer invoke the character controller at all,
+- the Rapier world still advances exactly one physics step per simulation tick,
+- the player transform remains unchanged on idle ticks,
+- grounded state is preserved from the last real character-controller movement.
+
+This keeps the authority/simulation clock deterministic while preventing no-op controller calls from perturbing character contact state.

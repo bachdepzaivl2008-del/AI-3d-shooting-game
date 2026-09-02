@@ -92,8 +92,12 @@ export class RapierCollisionWorld {
     }
   }
 
-  prepareQueries() {
+  step() {
     this.world.step()
+  }
+
+  prepareQueries() {
+    this.step()
   }
 
   computeCharacterMovement(character, desiredTranslation) {

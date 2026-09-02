@@ -127,6 +127,7 @@ export class PlayerMovementSystem {
     this.config = config
     this.collision = collision
     this.character = character
+    this.lastGrounded = true
   }
 
   update(input, deltaTime, yaw) {
@@ -151,12 +152,37 @@ export class PlayerMovementSystem {
       direction.x !== 0 ||
       direction.z !== 0
 
+    if (!hasPlanarMovement) {
+      // Critical invariant:
+      // an idle/look-only simulation tick must not run the
+      // character controller with a zero translation. Rapier can
+      // slightly re-resolve the grounded contact in that case,
+      // which perturbs the next movement sequence.
+      //
+      // We still step the physics world so future dynamic bodies
+      // remain deterministic at the simulation tick rate.
+      this.collision.step()
+
+      return {
+        position: this.getPosition(),
+        grounded: this.lastGrounded,
+        input: {
+          moveX,
+          moveY: moveForward,
+        },
+        correctedMovement: {
+          x: 0,
+          y: 0,
+          z: 0,
+        },
+      }
+    }
+
     const desiredMovement = {
       x: direction.x * distance,
-      y: hasPlanarMovement
-        ? -this.config.movement
-            .groundSnapBiasPerTick
-        : 0,
+      y:
+        -this.config.movement
+          .groundSnapBiasPerTick,
       z: direction.z * distance,
     }
 
@@ -172,9 +198,12 @@ export class PlayerMovementSystem {
         corrected
       )
 
+    this.lastGrounded =
+      corrected.grounded
+
     return {
       position,
-      grounded: corrected.grounded,
+      grounded: this.lastGrounded,
       input: {
         moveX,
         moveY: moveForward,
