@@ -150,6 +150,12 @@ export class Simulation {
     this.state.player.sprinting =
       movement.sprinting
 
+    this.state.player.crouched =
+      movement.crouched
+
+    this.state.player.standBlocked =
+      movement.standBlocked
+
     if (inputIntent) {
       this.state.player.lastInputSequence =
         inputIntent.sequence
