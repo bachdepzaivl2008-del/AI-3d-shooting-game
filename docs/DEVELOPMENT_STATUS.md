@@ -350,3 +350,19 @@ Definitive fix:
 - grounded state is preserved from the last real character-controller movement.
 
 This keeps the authority/simulation clock deterministic while preventing no-op controller calls from perturbing character contact state.
+
+
+## P2-MOVE-002 browser verification
+Browser preview verification: PASS.
+
+Observed in StackBlitz:
+- Vite dev server running on port 5174,
+- first-person mouse look works,
+- WASD movement works,
+- movement follows the camera orientation,
+- the debug cube remains visible in the scene.
+
+Note:
+- the cube appears larger because the camera/player now starts much closer to it in first-person perspective; cube geometry/config was not intentionally increased in P2-MOVE-002.
+
+P2-MOVE-002 now awaits one final full regression pass before closure.
