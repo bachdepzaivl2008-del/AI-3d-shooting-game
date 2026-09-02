@@ -5,16 +5,36 @@ function clampAxis(value) {
   return Math.max(-1, Math.min(1, value))
 }
 
+const DIRECTION_EPSILON = 1e-10
+
+function canonicalizeDirectionComponent(value) {
+  return Math.abs(value) < DIRECTION_EPSILON
+    ? 0
+    : value
+}
+
 function normalizePlanar(x, z) {
-  const length = Math.hypot(x, z)
+  const canonicalX =
+    canonicalizeDirectionComponent(x)
+
+  const canonicalZ =
+    canonicalizeDirectionComponent(z)
+
+  const length = Math.hypot(
+    canonicalX,
+    canonicalZ
+  )
 
   if (length <= 1) {
-    return { x, z }
+    return {
+      x: canonicalX,
+      z: canonicalZ,
+    }
   }
 
   return {
-    x: x / length,
-    z: z / length,
+    x: canonicalX / length,
+    z: canonicalZ / length,
   }
 }
 

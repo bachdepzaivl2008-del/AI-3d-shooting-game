@@ -270,3 +270,24 @@ Next diagnostic is compact:
 - count of ticks below 0.09 m,
 - summed deltaX,
 - only anomalous tick details.
+
+
+## P2-MOVE-002 root-cause finding
+Compact per-tick trace found:
+- exactly one anomalous movement tick,
+- anomalous tick = 13,
+- deltaX = 0 on that tick,
+- all sampled normal ticks move ~0.1 m,
+- yaw = 90° exactly,
+- player remains grounded,
+- tiny unintended Z drift is present.
+
+Root cause hypothesis now narrowed to floating-point residue in camera-relative cardinal directions:
+- at exactly 90° yaw, trigonometric basis values produce a near-zero Z component instead of exact zero,
+- that tiny residual is unnecessary and can perturb Rapier contact resolution over repeated grounded movement.
+
+Fix integrated:
+- canonicalize near-zero planar direction components to exact zero before normalization/collision movement,
+- do not change sensitivity, base speed, collision settings, or test tolerance.
+
+This is numerical canonicalization at the input-to-physics boundary, not a gameplay/balance change.
