@@ -25,6 +25,7 @@ export function createInitialGameState(config, runtime) {
         pitch: 0,
       },
       grounded: true,
+      sprinting: false,
       lastInputSequence: 0,
     },
   }
