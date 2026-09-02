@@ -198,3 +198,18 @@ Runtime correction:
 - when airborne in future Jump/Gravity work, Y may again represent real vertical velocity.
 
 The velocity regression was also upgraded to aggregate all XYZ/speed failures across all cases before failing, so one axis no longer hides the rest of the diagnostic.
+
+
+## Velocity XYZ regression verification
+Dedicated `velocity:test` now PASS.
+
+Verified authoritative velocity semantics:
+- X axis: stable and directionally correct across tested yaw/movement cases,
+- Y axis: 0 while grounded; Rapier contact correction is no longer exposed as gameplay vertical velocity,
+- Z axis: stable and directionally correct across tested yaw/movement cases,
+- planar SPEED remains stable at configured normal/Sprint targets,
+- idle returns XYZ velocity to 0,
+- normal/Sprint/diagonal/yaw 0°/45°/90° cases pass.
+
+Velocity telemetry sub-check is CLOSED.
+P2-MOVE-003 remains open only for final browser Sprint confirmation.
