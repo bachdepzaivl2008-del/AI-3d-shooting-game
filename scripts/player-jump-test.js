@@ -355,6 +355,115 @@ assert.ok(
 
 airAuthority.dispose()
 
+// Stationary takeoff carries zero planar speed.
+// Air steering may redirect carried momentum, but it must not create
+// horizontal speed from nothing.
+const stationaryAuthority =
+  await LocalAuthorityHost.create(
+    testConfig
+  )
+
+const stationarySequencer =
+  new IntentSequencer(
+    'test:jump-stationary-air-cap'
+  )
+
+stationaryAuthority.submitIntent(
+  createIntent(
+    stationarySequencer,
+    {
+      jump: true,
+    }
+  )
+)
+stationaryAuthority.step()
+
+stationaryAuthority.submitIntent(
+  createIntent(
+    stationarySequencer,
+    {
+      moveX: 1,
+      jump: false,
+    }
+  )
+)
+stationaryAuthority.step()
+
+const stationaryAirPlayer =
+  stationaryAuthority.getState().player
+
+const stationaryAirSpeed =
+  Math.hypot(
+    stationaryAirPlayer.velocity.x,
+    stationaryAirPlayer.velocity.z
+  )
+
+assert.ok(
+  stationaryAirSpeed <= 0.05,
+  'Stationary Jump must not create new horizontal speed from airborne input'
+)
+
+stationaryAuthority.dispose()
+
+// Sprint takeoff must be allowed to carry Sprint speed.
+const sprintAirAuthority =
+  await LocalAuthorityHost.create(
+    testConfig
+  )
+
+const sprintAirSequencer =
+  new IntentSequencer(
+    'test:jump-sprint-carry'
+  )
+
+sprintAirAuthority.submitIntent(
+  createIntent(
+    sprintAirSequencer,
+    {
+      moveY: 1,
+      sprint: true,
+      jump: true,
+    }
+  )
+)
+sprintAirAuthority.step()
+
+sprintAirAuthority.submitIntent(
+  createIntent(
+    sprintAirSequencer,
+    {
+      moveY: 1,
+      sprint: true,
+      jump: false,
+    }
+  )
+)
+sprintAirAuthority.step()
+
+const sprintAirPlayer =
+  sprintAirAuthority.getState().player
+
+const sprintAirSpeed =
+  Math.hypot(
+    sprintAirPlayer.velocity.x,
+    sprintAirPlayer.velocity.z
+  )
+
+const expectedSprintSpeed =
+  testConfig.movement.baseSpeed *
+  testConfig.movement.sprintMultiplier
+
+assert.ok(
+  nearlyEqual(
+    sprintAirSpeed,
+    expectedSprintSpeed,
+    0.05
+  ),
+  'Sprint Jump must preserve carried Sprint speed while the same input continues'
+)
+
+sprintAirAuthority.dispose()
+
 // Crouch + low ceiling:
 // Jump may not force a standing capsule through blocked head clearance.
 const blockedMovement =
@@ -446,6 +555,8 @@ console.log({
   noDoubleJump: true,
   heldJumpNoAutoRepeat: true,
   airborneSpeedGainBlocked: true,
+  stationaryAirGainBlocked: true,
+  sprintTakeoffSpeedPreserved: true,
   reducedAirSteering: true,
   lowCeilingJumpBlocked: true,
 })
