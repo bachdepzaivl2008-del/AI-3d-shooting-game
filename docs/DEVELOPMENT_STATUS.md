@@ -55,3 +55,38 @@ Final verification confirmed:
 **P2-MOVE-003 — Infinite Sprint (OPEN / IN IMPLEMENTATION)**
 
 Rule: a FAIL blocks the next dependent implementation unless explicitly registered as non-blocking PASS WITH ISSUES.
+
+
+## P2-MOVE-003 — Infinite Sprint
+**IMPLEMENTED / AWAITING VERIFICATION**
+
+Canonical Stage 1 values from Core Gameplay Systems 68B:
+- AR/Base Normal Ground Speed IIV = 5.5 m/s,
+- Sprint multiplier IIV = 1.25x,
+- AR/Base Sprint speed = 6.875 m/s,
+- Sprint stamina = unlimited,
+- Sprint may use any horizontal input direction.
+
+Important correction:
+- the earlier 6 m/s base speed was only a temporary technical integration placeholder,
+- Stage 1 now uses the canonical 5.5 m/s GDD IIV.
+
+Implemented:
+- Shift sprint intent consumed by authoritative movement,
+- authoritative player.sprinting state,
+- Sprint active only while horizontal movement exists,
+- idle + Shift does not move the player,
+- diagonal Sprint remains normalized,
+- fire/ADS fields already cancel Sprint for future combat integration,
+- debug overlay shows SPRINTING,
+- sprint:test added.
+
+Verification required:
+- npm run sprint:test
+- npm run movement:test
+- npm run look:test
+- npm run foundation:test
+- npm run collision:test
+- npm run character:test
+- npm run build
+- browser: hold Shift + WASD, confirm visible speed increase and SPRINTING: true.
