@@ -33,6 +33,11 @@ export function createInitialGameState(config, runtime) {
       sprinting: false,
       crouched: false,
       standBlocked: false,
+      landedThisTick: false,
+      landingType: 'none',
+      landingRecoveryMultiplier: 1,
+      landingRecoveryRemaining: 0,
+      landingImpactSpeed: 0,
       lastInputSequence: 0,
     },
   }
