@@ -148,6 +148,33 @@ const moved =
     .getState()
     .player
 
+const movementDiagnostic = {
+  yaw:
+    moved.orientation.yaw,
+  pitch:
+    moved.orientation.pitch,
+  start,
+  end:
+    moved.position,
+  deltaX:
+    moved.position.x -
+    start.x,
+  deltaZ:
+    moved.position.z -
+    start.z,
+  expectedDistance:
+    gameConfig.movement.baseSpeed,
+  yawDegrees:
+    (moved.orientation.yaw *
+      180) /
+    Math.PI,
+}
+
+console.log(
+  'Camera-relative movement diagnostic',
+  movementDiagnostic
+)
+
 assert.ok(
   nearlyEqual(
     moved.position.x -

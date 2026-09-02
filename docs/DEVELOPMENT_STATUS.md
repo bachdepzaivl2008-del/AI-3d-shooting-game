@@ -225,3 +225,13 @@ Verification:
 - existing regression tests must continue to pass,
 - browser preview should rotate after clicking the viewport and moving the mouse,
 - W should move in the direction the camera is facing.
+
+
+## P2-MOVE-002 diagnostic update
+Initial `look:test` result:
+- authoritative yaw/pitch assertion reached the camera-relative movement stage,
+- failure occurs on the expected +X displacement after a 90° yaw.
+
+Current action:
+- print authoritative yaw, start/end position, deltaX and deltaZ before changing implementation or tolerances,
+- keep P2-MOVE-002 OPEN until the mismatch is measured.
