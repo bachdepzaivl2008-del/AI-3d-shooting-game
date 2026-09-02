@@ -57,6 +57,29 @@ function cameraRelativeDirection(
   )
 }
 
+function clampPlanarMagnitude(
+  x,
+  z,
+  maxMagnitude
+) {
+  const magnitude = Math.hypot(x, z)
+
+  if (
+    magnitude <= maxMagnitude ||
+    magnitude <= DIRECTION_EPSILON
+  ) {
+    return { x, z }
+  }
+
+  const scale =
+    maxMagnitude / magnitude
+
+  return {
+    x: x * scale,
+    z: z * scale,
+  }
+}
+
 export class PlayerMovementSystem {
   static async create(config) {
     const collision = await RapierCollisionWorld.create({
@@ -127,8 +150,20 @@ export class PlayerMovementSystem {
     this.config = config
     this.collision = collision
     this.character = character
+
     this.lastGrounded = true
     this.crouched = false
+
+    this.jumpHeld = false
+    this.verticalVelocity = 0
+
+    this.airVelocity = {
+      x: 0,
+      z: 0,
+    }
+
+    this.airborneSpeedCap =
+      config.movement.baseSpeed
   }
 
   updateStance(crouchRequested) {
@@ -189,6 +224,118 @@ export class PlayerMovementSystem {
     }
   }
 
+  tryStandForJump(stance) {
+    if (!stance.crouched) {
+      return true
+    }
+
+    const standingHeight =
+      this.config.collision.character
+        .standingHeight
+
+    const canStand =
+      this.collision.canResizeCharacterHeight(
+        this.character,
+        standingHeight
+      )
+
+    if (!canStand) {
+      stance.standBlocked = true
+      return false
+    }
+
+    this.collision.setCharacterHeight(
+      this.character,
+      standingHeight
+    )
+
+    this.crouched = false
+    stance.crouched = false
+    stance.standBlocked = false
+
+    return true
+  }
+
+  computeGroundSpeed({
+    sprinting,
+    crouched,
+  }) {
+    if (crouched) {
+      return (
+        this.config.movement.baseSpeed *
+        this.config.movement
+          .crouchMultiplier
+      )
+    }
+
+    if (sprinting) {
+      return (
+        this.config.movement.baseSpeed *
+        this.config.movement
+          .sprintMultiplier
+      )
+    }
+
+    return this.config.movement.baseSpeed
+  }
+
+  updateAirVelocity(
+    direction,
+    requestedSpeed,
+    deltaTime
+  ) {
+    const hasInput =
+      direction.x !== 0 ||
+      direction.z !== 0
+
+    if (!hasInput) {
+      return {
+        ...this.airVelocity,
+      }
+    }
+
+    const cappedRequestedSpeed =
+      Math.min(
+        requestedSpeed,
+        this.airborneSpeedCap
+      )
+
+    const target = {
+      x:
+        direction.x *
+        cappedRequestedSpeed,
+      z:
+        direction.z *
+        cappedRequestedSpeed,
+    }
+
+    const alpha = Math.min(
+      1,
+      this.config.movement
+        .airSteeringRate *
+        deltaTime
+    )
+
+    const steered =
+      clampPlanarMagnitude(
+        this.airVelocity.x +
+          (target.x -
+            this.airVelocity.x) *
+            alpha,
+        this.airVelocity.z +
+          (target.z -
+            this.airVelocity.z) *
+            alpha,
+        this.airborneSpeedCap
+      )
+
+    this.airVelocity = steered
+
+    return {
+      ...steered,
+    }
+  }
+
   update(input, deltaTime, yaw) {
     const moveX =
       clampAxis(input?.moveX ?? 0)
@@ -198,6 +345,16 @@ export class PlayerMovementSystem {
 
     const crouchRequested =
       input?.crouch === true
+
+    const jumpRequested =
+      input?.jump === true
+
+    const jumpPressed =
+      jumpRequested &&
+      !this.jumpHeld
+
+    this.jumpHeld =
+      jumpRequested
 
     const stance =
       this.updateStance(
@@ -220,20 +377,69 @@ export class PlayerMovementSystem {
       input?.fire !== true &&
       input?.ads !== true
 
-    const sprinting =
+    let sprinting =
       hasPlanarMovement &&
       sprintRequested &&
-      !stance.crouched
+      !stance.crouched &&
+      this.lastGrounded
 
-    if (!hasPlanarMovement) {
-      // Critical invariant:
-      // an idle/look-only simulation tick must not run the
-      // character controller with a zero translation. Rapier can
-      // slightly re-resolve the grounded contact in that case,
-      // which perturbs the next movement sequence.
-      //
-      // We still step the physics world so future dynamic bodies
-      // remain deterministic at the simulation tick rate.
+    let jumpedThisTick = false
+
+    if (
+      jumpPressed &&
+      this.lastGrounded
+    ) {
+      const canLaunch =
+        this.tryStandForJump(
+          stance
+        )
+
+      if (canLaunch) {
+        jumpedThisTick = true
+        sprinting =
+          hasPlanarMovement &&
+          sprintRequested
+
+        const takeoffSpeed =
+          this.computeGroundSpeed({
+            sprinting,
+            crouched: false,
+          })
+
+        this.airVelocity = {
+          x:
+            direction.x *
+            takeoffSpeed,
+          z:
+            direction.z *
+            takeoffSpeed,
+        }
+
+        this.airborneSpeedCap =
+          Math.max(
+            takeoffSpeed,
+            Math.hypot(
+              this.airVelocity.x,
+              this.airVelocity.z
+            )
+          )
+
+        this.verticalVelocity =
+          this.config.movement
+            .jumpVerticalVelocity
+
+        this.lastGrounded = false
+      }
+    }
+
+    const airborne =
+      !this.lastGrounded ||
+      jumpedThisTick
+
+    if (
+      !hasPlanarMovement &&
+      !airborne
+    ) {
       this.collision.step()
 
       return {
@@ -241,7 +447,10 @@ export class PlayerMovementSystem {
         grounded: this.lastGrounded,
         sprinting: false,
         crouched: stance.crouched,
-        standBlocked: stance.standBlocked,
+        standBlocked:
+          stance.standBlocked,
+        jumpedThisTick: false,
+        verticalVelocity: 0,
         input: {
           moveX,
           moveY: moveForward,
@@ -254,26 +463,45 @@ export class PlayerMovementSystem {
       }
     }
 
-    const speedMultiplier =
-      stance.crouched
-        ? this.config.movement
-            .crouchMultiplier
-        : sprinting
-          ? this.config.movement
-              .sprintMultiplier
-          : 1
+    const requestedGroundSpeed =
+      this.computeGroundSpeed({
+        sprinting,
+        crouched:
+          stance.crouched,
+      })
 
-    const distance =
-      this.config.movement.baseSpeed *
-      speedMultiplier *
-      deltaTime
+    let planarVelocity
+
+    if (airborne) {
+      planarVelocity =
+        this.updateAirVelocity(
+          direction,
+          requestedGroundSpeed,
+          deltaTime
+        )
+    } else {
+      planarVelocity = {
+        x:
+          direction.x *
+          requestedGroundSpeed,
+        z:
+          direction.z *
+          requestedGroundSpeed,
+      }
+    }
 
     const desiredMovement = {
-      x: direction.x * distance,
+      x:
+        planarVelocity.x *
+        deltaTime,
       y:
-        -this.config.movement
-          .groundSnapBiasPerTick,
-      z: direction.z * distance,
+        airborne
+          ? this.verticalVelocity *
+            deltaTime
+          : 0,
+      z:
+        planarVelocity.z *
+        deltaTime,
     }
 
     const corrected =
@@ -288,15 +516,56 @@ export class PlayerMovementSystem {
         corrected
       )
 
-    this.lastGrounded =
-      corrected.grounded
+    const landed =
+      corrected.grounded &&
+      this.verticalVelocity <= 0 &&
+      airborne
+
+    if (landed) {
+      this.lastGrounded = true
+      this.verticalVelocity = 0
+
+      this.airVelocity = {
+        x:
+          corrected.x /
+          deltaTime,
+        z:
+          corrected.z /
+          deltaTime,
+      }
+    } else if (airborne) {
+      this.lastGrounded = false
+
+      this.verticalVelocity -=
+        this.config.movement.gravity *
+        deltaTime
+
+      this.airVelocity = {
+        x:
+          corrected.x /
+          deltaTime,
+        z:
+          corrected.z /
+          deltaTime,
+      }
+    } else {
+      this.lastGrounded =
+        corrected.grounded
+    }
 
     return {
       position,
       grounded: this.lastGrounded,
-      sprinting,
+      sprinting:
+        this.lastGrounded
+          ? sprinting
+          : false,
       crouched: stance.crouched,
-      standBlocked: stance.standBlocked,
+      standBlocked:
+        stance.standBlocked,
+      jumpedThisTick,
+      verticalVelocity:
+        this.verticalVelocity,
       input: {
         moveX,
         moveY: moveForward,
