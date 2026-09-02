@@ -128,6 +128,9 @@ export class Simulation {
     this.state.player.grounded =
       movement.grounded
 
+    this.state.player.sprinting =
+      movement.sprinting
+
     if (inputIntent) {
       this.state.player.lastInputSequence =
         inputIntent.sequence
