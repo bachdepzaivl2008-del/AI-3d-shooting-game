@@ -1,7 +1,8 @@
 import { createInitialGameState } from '../state/createInitialGameState.js'
 import { SimulationClock } from '../../shared/simulation/SimulationClock.js'
 import { SeededRandom } from '../../shared/random/SeededRandom.js'
-import { StableIdAllocator } from '../../shared/ids/StableIdAllocator.js'
+import { createGameIdAllocators } from '../../shared/entities/FoundationRegistry.js'
+import { GameplayEventStream } from '../../shared/events/GameplayEventStream.js'
 import { PlayerMovementSystem } from '../systems/PlayerMovementSystem.js'
 import { PlayerLookSystem } from '../systems/PlayerLookSystem.js'
 
@@ -49,16 +50,27 @@ export class Simulation {
       config.simulation.randomSeed
     )
 
-    this.entityIds =
-      new StableIdAllocator('entity')
+    this.ids = createGameIdAllocators()
+
+    this.events =
+      new GameplayEventStream('simulation')
 
     this.state =
       createInitialGameState(config, {
-        cubeId: this.entityIds.next(),
-        playerId: this.entityIds.next(),
+        cubeId: this.ids.entity.next(),
+        playerId: this.ids.entity.next(),
         playerPosition:
           this.movementSystem.getPosition(),
       })
+
+    this.events.emit(
+      'SIMULATION_CREATED',
+      {},
+      {
+        tick: this.state.tick,
+        time: this.state.time,
+      }
+    )
   }
 
   update(intents = []) {
@@ -74,15 +86,11 @@ export class Simulation {
     const deltaTime =
       clockState.fixedDeltaTime
 
-    this.state.tick =
-      clockState.tick
-
-    this.state.time =
-      clockState.elapsedTime
+    this.state.tick = clockState.tick
+    this.state.time = clockState.elapsedTime
 
     this.state.cube.rotationY +=
-      this.config.cube.spinSpeed *
-      deltaTime
+      this.config.cube.spinSpeed * deltaTime
 
     if (
       this.state.cube.rotationY >
@@ -128,6 +136,10 @@ export class Simulation {
 
   getState() {
     return this.state
+  }
+
+  getEventStream() {
+    return this.events
   }
 
   dispose() {

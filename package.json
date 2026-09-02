@@ -14,7 +14,8 @@
     "ramp-entry:probe": "node scripts/ramp-entry-probe.js",
     "movement:test": "node scripts/player-movement-test.js",
     "look:test": "node scripts/player-look-test.js",
-    "movement-transition:probe": "node scripts/movement-transition-probe.js"
+    "movement-transition:probe": "node scripts/movement-transition-probe.js",
+    "foundation:test": "node scripts/stage0-foundation-test.js"
   },
   "devDependencies": {
     "vite": "^8.2.0"
