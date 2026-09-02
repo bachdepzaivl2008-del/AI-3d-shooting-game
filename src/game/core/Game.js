@@ -17,43 +17,60 @@ export class Game {
     this.config = config
     this.authority = authority
 
-    this.sceneView = createSceneView(config)
-    this.inputSource = new BrowserInputSource()
+    this.sceneView =
+      createSceneView(config)
+
+    this.inputSource =
+      new BrowserInputSource(
+        this.sceneView.inputElement
+      )
 
     this.lastFrameTime = 0
     this.accumulator = 0
     this.animationFrameId = null
     this.isRunning = false
 
-    this.loop = this.loop.bind(this)
+    this.loop =
+      this.loop.bind(this)
   }
 
   start() {
     if (this.isRunning) return
 
     this.isRunning = true
-    this.lastFrameTime = performance.now()
+    this.lastFrameTime =
+      performance.now()
+
     this.animationFrameId =
-      requestAnimationFrame(this.loop)
+      requestAnimationFrame(
+        this.loop
+      )
   }
 
   loop(now) {
     if (!this.isRunning) return
 
     const rawDeltaTime =
-      (now - this.lastFrameTime) / 1000
+      (now -
+        this.lastFrameTime) /
+      1000
+
     this.lastFrameTime = now
 
-    const frameDeltaTime = Math.min(
-      rawDeltaTime,
-      this.config.simulation.maxFrameTime
-    )
+    const frameDeltaTime =
+      Math.min(
+        rawDeltaTime,
+        this.config.simulation
+          .maxFrameTime
+      )
 
-    this.accumulator += frameDeltaTime
+    this.accumulator +=
+      frameDeltaTime
 
     while (
       this.accumulator >=
-      this.config.simulation.fixedDeltaTime
+      this.config.simulation
+        .fixedDeltaTime
     ) {
       this.authority.submitIntent(
         this.inputSource.sampleIntent()
@@ -62,7 +79,8 @@ export class Game {
       this.authority.step()
 
       this.accumulator -=
-        this.config.simulation.fixedDeltaTime
+        this.config.simulation
+          .fixedDeltaTime
     }
 
     this.sceneView.render(
@@ -70,15 +88,24 @@ export class Game {
     )
 
     this.animationFrameId =
-      requestAnimationFrame(this.loop)
+      requestAnimationFrame(
+        this.loop
+      )
   }
 
   stop() {
     this.isRunning = false
 
-    if (this.animationFrameId !== null) {
-      cancelAnimationFrame(this.animationFrameId)
-      this.animationFrameId = null
+    if (
+      this.animationFrameId !==
+      null
+    ) {
+      cancelAnimationFrame(
+        this.animationFrameId
+      )
+
+      this.animationFrameId =
+        null
     }
 
     this.inputSource.dispose()

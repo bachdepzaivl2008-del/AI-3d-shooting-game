@@ -35,6 +35,13 @@ export const gameConfig = {
     groundSnapBiasPerTick: 0.001,
   },
 
+  look: {
+    // IIV values for the first mouse-look integration pass.
+    // Not locked balance values.
+    mouseSensitivityRadiansPerPixel: 0.0025,
+    maxPitchDegrees: 89,
+  },
+
   player: {
     spawnPosition: {
       x: 0,

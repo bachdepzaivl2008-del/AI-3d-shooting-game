@@ -18,6 +18,25 @@ function normalizePlanar(x, z) {
   }
 }
 
+function cameraRelativeDirection(
+  moveX,
+  moveForward,
+  yaw
+) {
+  const rightX = Math.cos(yaw)
+  const rightZ = Math.sin(yaw)
+
+  const forwardX = Math.sin(yaw)
+  const forwardZ = -Math.cos(yaw)
+
+  return normalizePlanar(
+    rightX * moveX +
+      forwardX * moveForward,
+    rightZ * moveX +
+      forwardZ * moveForward
+  )
+}
+
 export class PlayerMovementSystem {
   static async create(config) {
     const collision = await RapierCollisionWorld.create({
@@ -38,7 +57,6 @@ export class PlayerMovementSystem {
       },
     })
 
-    // Temporary prototype obstacle that matches the existing debug cube.
     collision.createStaticBox({
       center: {
         x: config.cube.startPosition.x,
@@ -52,19 +70,29 @@ export class PlayerMovementSystem {
       },
     })
 
-    const characterConfig = config.collision.character
+    const characterConfig =
+      config.collision.character
 
-    const character = collision.createKinematicCapsule({
-      position: config.player.spawnPosition,
-      totalHeight: characterConfig.standingHeight,
-      radius: characterConfig.radius,
-      controllerOffset: characterConfig.controllerOffset,
-      maxSlopeClimbAngle:
-        (characterConfig.maxSlopeDegrees * Math.PI) / 180,
-      stepHeight: characterConfig.stepHeight,
-      autostepMinWidth: characterConfig.autostepMinWidth,
-      snapToGroundDistance: characterConfig.snapToGroundDistance,
-    })
+    const character =
+      collision.createKinematicCapsule({
+        position: config.player.spawnPosition,
+        totalHeight:
+          characterConfig.standingHeight,
+        radius:
+          characterConfig.radius,
+        controllerOffset:
+          characterConfig.controllerOffset,
+        maxSlopeClimbAngle:
+          (characterConfig.maxSlopeDegrees *
+            Math.PI) /
+          180,
+        stepHeight:
+          characterConfig.stepHeight,
+        autostepMinWidth:
+          characterConfig.autostepMinWidth,
+        snapToGroundDistance:
+          characterConfig.snapToGroundDistance,
+      })
 
     collision.prepareQueries()
 
@@ -81,21 +109,29 @@ export class PlayerMovementSystem {
     this.character = character
   }
 
-  update(input, deltaTime) {
-    const moveX = clampAxis(input?.moveX ?? 0)
-    const moveForward = clampAxis(input?.moveY ?? 0)
+  update(input, deltaTime, yaw) {
+    const moveX =
+      clampAxis(input?.moveX ?? 0)
 
-    const direction = normalizePlanar(
-      moveX,
-      -moveForward
-    )
+    const moveForward =
+      clampAxis(input?.moveY ?? 0)
+
+    const direction =
+      cameraRelativeDirection(
+        moveX,
+        moveForward,
+        yaw
+      )
 
     const distance =
-      this.config.movement.baseSpeed * deltaTime
+      this.config.movement.baseSpeed *
+      deltaTime
 
     const desiredMovement = {
       x: direction.x * distance,
-      y: -this.config.movement.groundSnapBiasPerTick,
+      y:
+        -this.config.movement
+          .groundSnapBiasPerTick,
       z: direction.z * distance,
     }
 
@@ -127,7 +163,8 @@ export class PlayerMovementSystem {
   }
 
   getPosition() {
-    const position = this.character.body.translation()
+    const position =
+      this.character.body.translation()
 
     return {
       x: position.x,

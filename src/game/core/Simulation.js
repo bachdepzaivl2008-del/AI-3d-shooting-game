@@ -3,6 +3,7 @@ import { SimulationClock } from '../../shared/simulation/SimulationClock.js'
 import { SeededRandom } from '../../shared/random/SeededRandom.js'
 import { StableIdAllocator } from '../../shared/ids/StableIdAllocator.js'
 import { PlayerMovementSystem } from '../systems/PlayerMovementSystem.js'
+import { PlayerLookSystem } from '../systems/PlayerLookSystem.js'
 
 function latestPlayerInput(intents) {
   let latest = null
@@ -37,6 +38,8 @@ export class Simulation {
   constructor(config, movementSystem) {
     this.config = config
     this.movementSystem = movementSystem
+    this.lookSystem =
+      new PlayerLookSystem(config)
 
     this.clock = new SimulationClock(
       config.simulation.fixedDeltaTime
@@ -46,40 +49,66 @@ export class Simulation {
       config.simulation.randomSeed
     )
 
-    this.entityIds = new StableIdAllocator('entity')
+    this.entityIds =
+      new StableIdAllocator('entity')
 
-    this.state = createInitialGameState(config, {
-      cubeId: this.entityIds.next(),
-      playerId: this.entityIds.next(),
-      playerPosition:
-        this.movementSystem.getPosition(),
-    })
+    this.state =
+      createInitialGameState(config, {
+        cubeId: this.entityIds.next(),
+        playerId: this.entityIds.next(),
+        playerPosition:
+          this.movementSystem.getPosition(),
+      })
   }
 
   update(intents = []) {
     if (!Array.isArray(intents)) {
-      throw new Error('Simulation intents must be an array')
+      throw new Error(
+        'Simulation intents must be an array'
+      )
     }
 
-    const clockState = this.clock.advance()
-    const deltaTime = clockState.fixedDeltaTime
+    const clockState =
+      this.clock.advance()
 
-    this.state.tick = clockState.tick
-    this.state.time = clockState.elapsedTime
+    const deltaTime =
+      clockState.fixedDeltaTime
+
+    this.state.tick =
+      clockState.tick
+
+    this.state.time =
+      clockState.elapsedTime
 
     this.state.cube.rotationY +=
-      this.config.cube.spinSpeed * deltaTime
+      this.config.cube.spinSpeed *
+      deltaTime
 
-    if (this.state.cube.rotationY > Math.PI * 2) {
-      this.state.cube.rotationY -= Math.PI * 2
+    if (
+      this.state.cube.rotationY >
+      Math.PI * 2
+    ) {
+      this.state.cube.rotationY -=
+        Math.PI * 2
     }
 
-    const inputIntent = latestPlayerInput(intents)
+    const inputIntent =
+      latestPlayerInput(intents)
+
+    const payload =
+      inputIntent?.payload ?? {}
+
+    this.state.player.orientation =
+      this.lookSystem.update(
+        this.state.player.orientation,
+        payload
+      )
 
     const movement =
       this.movementSystem.update(
-        inputIntent?.payload ?? {},
-        deltaTime
+        payload,
+        deltaTime,
+        this.state.player.orientation.yaw
       )
 
     this.state.player.position = {

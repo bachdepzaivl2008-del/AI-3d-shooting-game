@@ -199,3 +199,29 @@ Not included yet:
 - crouch,
 - slide,
 - dash.
+
+
+## P2-MOVE-002 — Mouse Look & Camera Orientation
+**IMPLEMENTED / AWAITING VERIFICATION**
+
+Implemented:
+- pointer-lock request on click,
+- mouse delta capture in the client input layer,
+- look deltas included in PLAYER_INPUT intent payloads,
+- authoritative yaw/pitch state,
+- authoritative pitch clamp,
+- camera orientation driven only from authoritative state,
+- WASD movement rotated by authoritative yaw,
+- headless look + camera-relative movement test.
+
+Current technical IIV:
+- mouse sensitivity = 0.0025 rad/pixel,
+- max pitch = 89°.
+
+These are integration placeholders, not locked balance values.
+
+Verification:
+- `npm run look:test`
+- existing regression tests must continue to pass,
+- browser preview should rotate after clicking the viewport and moving the mouse,
+- W should move in the direction the camera is facing.

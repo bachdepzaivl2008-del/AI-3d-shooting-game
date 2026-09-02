@@ -12,7 +12,8 @@
     "character:test": "node scripts/character-collision-test.js",
     "slope:probe": "node scripts/minimal-slope-probe.js",
     "ramp-entry:probe": "node scripts/ramp-entry-probe.js",
-    "movement:test": "node scripts/player-movement-test.js"
+    "movement:test": "node scripts/player-movement-test.js",
+    "look:test": "node scripts/player-look-test.js"
   },
   "devDependencies": {
     "vite": "^8.2.0"

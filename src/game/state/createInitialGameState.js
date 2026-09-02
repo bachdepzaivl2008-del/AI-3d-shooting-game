@@ -20,6 +20,10 @@ export function createInitialGameState(config, runtime) {
         y: runtime.playerPosition.y,
         z: runtime.playerPosition.z,
       },
+      orientation: {
+        yaw: 0,
+        pitch: 0,
+      },
       grounded: true,
       lastInputSequence: 0,
     },

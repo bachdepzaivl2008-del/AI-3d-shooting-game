@@ -6,16 +6,19 @@ export function createSceneView(config) {
     config.world.backgroundColor
   )
 
-  const camera = new THREE.PerspectiveCamera(
-    config.camera.fov,
-    window.innerWidth / window.innerHeight,
-    config.camera.near,
-    config.camera.far
-  )
+  const camera =
+    new THREE.PerspectiveCamera(
+      config.camera.fov,
+      window.innerWidth /
+        window.innerHeight,
+      config.camera.near,
+      config.camera.far
+    )
 
-  const renderer = new THREE.WebGLRenderer({
-    antialias: true,
-  })
+  const renderer =
+    new THREE.WebGLRenderer({
+      antialias: true,
+    })
 
   renderer.setSize(
     window.innerWidth,
@@ -23,46 +26,56 @@ export function createSceneView(config) {
   )
 
   renderer.setPixelRatio(
-    Math.min(window.devicePixelRatio, 2)
+    Math.min(
+      window.devicePixelRatio,
+      2
+    )
   )
 
   document.body.appendChild(
     renderer.domElement
   )
 
-  const groundGeometry = new THREE.PlaneGeometry(
-    config.world.groundSize,
-    config.world.groundSize
-  )
+  const groundGeometry =
+    new THREE.PlaneGeometry(
+      config.world.groundSize,
+      config.world.groundSize
+    )
 
   const groundMaterial =
     new THREE.MeshStandardMaterial({
-      color: config.world.groundColor,
+      color:
+        config.world.groundColor,
     })
 
-  const ground = new THREE.Mesh(
-    groundGeometry,
-    groundMaterial
-  )
+  const ground =
+    new THREE.Mesh(
+      groundGeometry,
+      groundMaterial
+    )
 
-  ground.rotation.x = -Math.PI / 2
+  ground.rotation.x =
+    -Math.PI / 2
+
   scene.add(ground)
 
-  const cubeGeometry = new THREE.BoxGeometry(
-    config.cube.size,
-    config.cube.size,
-    config.cube.size
-  )
+  const cubeGeometry =
+    new THREE.BoxGeometry(
+      config.cube.size,
+      config.cube.size,
+      config.cube.size
+    )
 
   const cubeMaterial =
     new THREE.MeshStandardMaterial({
       color: config.cube.color,
     })
 
-  const cube = new THREE.Mesh(
-    cubeGeometry,
-    cubeMaterial
-  )
+  const cube =
+    new THREE.Mesh(
+      cubeGeometry,
+      cubeMaterial
+    )
 
   scene.add(cube)
 
@@ -98,20 +111,46 @@ export function createSceneView(config) {
     cube.rotation.y =
       state.cube.rotationY
 
-    const player = state.player.position
+    const player =
+      state.player.position
+
+    const orientation =
+      state.player.orientation
+
+    const eyeY =
+      player.y +
+      config.player.cameraEyeOffsetY
 
     camera.position.set(
       player.x,
-      player.y +
-        config.player.cameraEyeOffsetY,
+      eyeY,
       player.z
     )
 
+    const cosPitch =
+      Math.cos(
+        orientation.pitch
+      )
+
+    const forward = {
+      x:
+        Math.sin(
+          orientation.yaw
+        ) * cosPitch,
+      y:
+        Math.sin(
+          orientation.pitch
+        ),
+      z:
+        -Math.cos(
+          orientation.yaw
+        ) * cosPitch,
+    }
+
     camera.lookAt(
-      player.x,
-      player.y +
-        config.player.cameraEyeOffsetY,
-      player.z - 1
+      player.x + forward.x,
+      eyeY + forward.y,
+      player.z + forward.z
     )
   }
 
@@ -154,5 +193,7 @@ export function createSceneView(config) {
   return {
     render,
     dispose,
+    inputElement:
+      renderer.domElement,
   }
 }
