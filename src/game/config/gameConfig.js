@@ -56,6 +56,14 @@ export const gameConfig = {
     hardLandingRetainMultiplier: 0.70,
     hardLandingRecoverySeconds: 0.30,
 
+    // Core Gameplay Systems 68B Slide IIVs.
+    slideEntrySpeed: 6.0,
+    slideInitialBoost: 0.4,
+    slideInitialMaxSpeed: 9.0,
+    slideFlatDeceleration: 2.5,
+    slideMaxDuration: 1.20,
+    slideExitSpeed: 4.5,
+
     // Runtime movement uses Rapier's built-in snap-to-ground directly.
     // The diagnostic sweep proved that any synthetic downward bias can
     // intermittently shorten/zero planar movement ticks at canonical speeds.
