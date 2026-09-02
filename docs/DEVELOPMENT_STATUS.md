@@ -52,7 +52,7 @@ Final verification confirmed:
 - Collision foundation regression: PASS
 
 ## Current task
-**P2-MOVE-003 — Infinite Sprint (OPEN / IN IMPLEMENTATION)**
+**P2-MOVE-004 — Crouch & Camera Eye Height (OPEN / IN IMPLEMENTATION)**
 
 Rule: a FAIL blocks the next dependent implementation unless explicitly registered as non-blocking PASS WITH ISSUES.
 
@@ -213,3 +213,18 @@ Verified authoritative velocity semantics:
 
 Velocity telemetry sub-check is CLOSED.
 P2-MOVE-003 remains open only for final browser Sprint confirmation.
+
+
+## P2-MOVE-003 closure
+**PASS WITH ISSUES / CLOSED**
+
+Mechanical Sprint contract is verified by:
+- sprint:test PASS,
+- movement/look/foundation/collision/character/build regression PASS,
+- velocity:test PASS for normal/Sprint/yaw/diagonal XYZ semantics.
+
+Non-blocking deferred issue:
+- the 1.25x Sprint increase can feel visually subtle in the current empty test scene.
+- This is a presentation/balance-feel item for later playtest/weapon-feel passes, not a locomotion correctness blocker.
+
+Proceeding to the next canonical Stage 1 item: Crouch.
