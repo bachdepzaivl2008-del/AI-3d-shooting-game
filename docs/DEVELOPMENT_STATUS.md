@@ -141,3 +141,22 @@ Fix:
 - shared CharacterController snap-to-ground remains enabled.
 
 P2-MOVE-003 remains OPEN until sprint/movement/look/full regression + browser verification pass.
+
+
+## P2-MOVE-003 full regression result
+User verification confirms the full seven-command regression is green with no ERROR output:
+- sprint:test PASS
+- movement:test PASS
+- look:test PASS
+- foundation:test PASS
+- collision:test PASS
+- character:test PASS
+- build PASS
+
+Canonical movement values remain:
+- Normal Ground Speed = 5.5 m/s
+- Sprint Multiplier = 1.25x
+- Sprint Speed = 6.875 m/s
+- Sprint stamina = unlimited
+
+P2-MOVE-003 now only requires final browser verification before closure.
