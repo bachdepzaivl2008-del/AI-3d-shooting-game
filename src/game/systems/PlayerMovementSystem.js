@@ -496,7 +496,13 @@ export class PlayerMovementSystem {
         deltaTime,
       y:
         airborne
-          ? this.verticalVelocity *
+          ? (
+              this.verticalVelocity -
+              0.5 *
+                this.config.movement
+                  .gravity *
+                deltaTime
+            ) *
             deltaTime
           : 0,
       z:
