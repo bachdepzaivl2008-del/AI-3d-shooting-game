@@ -80,6 +80,47 @@ function clampPlanarMagnitude(
   }
 }
 
+export function computeSlideSlopeAcceleration(
+  correctedMovement,
+  gravity
+) {
+  if (!correctedMovement?.grounded) {
+    return 0
+  }
+
+  const horizontalDistance =
+    Math.hypot(
+      correctedMovement.x,
+      correctedMovement.z
+    )
+
+  const pathDistance =
+    Math.hypot(
+      horizontalDistance,
+      correctedMovement.y
+    )
+
+  if (pathDistance <= DIRECTION_EPSILON) {
+    return 0
+  }
+
+  const slopeSin =
+    Math.max(
+      -1,
+      Math.min(
+        1,
+        correctedMovement.y /
+          pathDistance
+      )
+    )
+
+  // Uphill => positive Y => negative acceleration.
+  // Downhill => negative Y => positive acceleration.
+  // This is gravity projected along the traversed surface,
+  // not a hidden slope-speed bonus.
+  return -gravity * slopeSin
+}
+
 export class PlayerMovementSystem {
   static async create(config) {
     const collision = await RapierCollisionWorld.create({
@@ -174,6 +215,22 @@ export class PlayerMovementSystem {
     this.airborneStartY = null
     this.airborneMinY = null
     this.airborneMaxY = null
+
+    this.lastPlanarVelocity = {
+      x: 0,
+      z: 0,
+    }
+
+    this.slideEntryArmed = true
+    this.sliding = false
+    this.slideDirection = {
+      x: 0,
+      z: 0,
+    }
+    this.slideSpeed = 0
+    this.slideElapsed = 0
+    this.slideExitReason = 'none'
+    this.slideSlopeAcceleration = 0
   }
 
   beginAirborneTracking(y) {
@@ -470,8 +527,123 @@ export class PlayerMovementSystem {
     }
   }
 
+  getLastPlanarSpeed() {
+    return Math.hypot(
+      this.lastPlanarVelocity.x,
+      this.lastPlanarVelocity.z
+    )
+  }
+
+  setLastPlanarVelocity(
+    x,
+    z
+  ) {
+    this.lastPlanarVelocity = {
+      x:
+        canonicalizeDirectionComponent(x),
+      z:
+        canonicalizeDirectionComponent(z),
+    }
+  }
+
+  startSlide() {
+    const currentSpeed =
+      this.getLastPlanarSpeed()
+
+    if (
+      currentSpeed <
+      this.config.movement.slideEntrySpeed
+    ) {
+      return false
+    }
+
+    const direction =
+      normalizePlanar(
+        this.lastPlanarVelocity.x /
+          currentSpeed,
+        this.lastPlanarVelocity.z /
+          currentSpeed
+      )
+
+    this.sliding = true
+    this.slideDirection = direction
+    this.slideSpeed =
+      Math.min(
+        currentSpeed +
+          this.config.movement
+            .slideInitialBoost,
+        this.config.movement
+          .slideInitialMaxSpeed
+      )
+
+    this.slideElapsed = 0
+    this.slideExitReason = 'none'
+    this.slideSlopeAcceleration = 0
+
+    return true
+  }
+
+  stopSlide(reason) {
+    this.sliding = false
+    this.slideSpeed = 0
+    this.slideSlopeAcceleration = 0
+    this.slideExitReason = reason
+  }
+
+  getSlideState() {
+    return {
+      sliding: this.sliding,
+      slideSpeed: this.slideSpeed,
+      slideElapsed: this.slideElapsed,
+      slideExitReason:
+        this.slideExitReason,
+      slideSlopeAcceleration:
+        this.slideSlopeAcceleration,
+    }
+  }
+
+  createResult({
+    position,
+    grounded,
+    sprinting,
+    stance,
+    jumpedThisTick,
+    landedThisTick,
+    verticalVelocity,
+    correctedMovement,
+    moveX,
+    moveForward,
+  }) {
+    return {
+      position,
+      grounded,
+      sprinting,
+      crouched: stance.crouched,
+      standBlocked:
+        stance.standBlocked,
+      jumpedThisTick,
+      landedThisTick,
+      verticalVelocity,
+      landingType:
+        this.landingType,
+      landingRecoveryMultiplier:
+        this.getLandingRecoveryMultiplier(),
+      landingRecoveryRemaining:
+        this.landingRecoveryRemaining,
+      landingImpactSpeed:
+        this.lastLandingImpactSpeed,
+      ...this.getSlideState(),
+      input: {
+        moveX,
+        moveY: moveForward,
+      },
+      correctedMovement,
+    }
+  }
+
   update(input, deltaTime, yaw) {
     let landedThisTick = false
+    let jumpedThisTick = false
 
     const landingRecoveryMultiplier =
       this.getLandingRecoveryMultiplier()
@@ -485,6 +657,16 @@ export class PlayerMovementSystem {
     const crouchRequested =
       input?.crouch === true
 
+    const crouchPressed =
+      crouchRequested &&
+      this.slideEntryArmed
+
+    if (crouchRequested) {
+      this.slideEntryArmed = false
+    } else {
+      this.slideEntryArmed = true
+    }
+
     const jumpRequested =
       input?.jump === true
 
@@ -494,6 +676,15 @@ export class PlayerMovementSystem {
 
     this.jumpHeld =
       jumpRequested
+
+    if (
+      this.sliding &&
+      !crouchRequested
+    ) {
+      this.stopSlide(
+        'crouch_released'
+      )
+    }
 
     const stance =
       this.updateStance(
@@ -520,13 +711,71 @@ export class PlayerMovementSystem {
       hasPlanarMovement &&
       sprintRequested &&
       !stance.crouched &&
-      this.lastGrounded
+      this.lastGrounded &&
+      !this.sliding
 
-    let jumpedThisTick = false
-
+    // Existing Slide + Jump is an allowed transition.
+    // The carried horizontal speed is capped at current Sprint speed.
     if (
       jumpPressed &&
-      this.lastGrounded
+      this.lastGrounded &&
+      this.sliding
+    ) {
+      const canLaunch =
+        this.tryStandForJump(
+          stance
+        )
+
+      if (canLaunch) {
+        const slideCarrySpeed =
+          Math.min(
+            this.slideSpeed,
+            this.config.movement
+              .baseSpeed *
+              this.config.movement
+                .sprintMultiplier
+          )
+
+        const slideCarryDirection = {
+          ...this.slideDirection,
+        }
+
+        this.stopSlide('jump')
+
+        jumpedThisTick = true
+        sprinting = false
+
+        this.airVelocity = {
+          x:
+            slideCarryDirection.x *
+            slideCarrySpeed,
+          z:
+            slideCarryDirection.z *
+            slideCarrySpeed,
+        }
+
+        this.airborneSpeedCap =
+          slideCarrySpeed
+
+        this.verticalVelocity =
+          this.config.movement
+            .jumpVerticalVelocity
+
+        this.beginAirborneTracking(
+          this.getPosition().y
+        )
+
+        this.lastGrounded = false
+      }
+    }
+
+    // Normal grounded Jump takes priority over a new Slide entry
+    // if Space and Crouch are pressed on the same tick.
+    if (
+      jumpPressed &&
+      this.lastGrounded &&
+      !this.sliding &&
+      !jumpedThisTick
     ) {
       const canLaunch =
         this.tryStandForJump(
@@ -535,6 +784,7 @@ export class PlayerMovementSystem {
 
       if (canLaunch) {
         jumpedThisTick = true
+
         sprinting =
           hasPlanarMovement &&
           sprintRequested
@@ -573,9 +823,164 @@ export class PlayerMovementSystem {
       }
     }
 
+    if (
+      !jumpedThisTick &&
+      !this.sliding &&
+      crouchPressed &&
+      crouchRequested &&
+      this.lastGrounded
+    ) {
+      const enteredSlide =
+        this.startSlide()
+
+      if (enteredSlide) {
+        sprinting = false
+      }
+    }
+
     const airborne =
       !this.lastGrounded ||
       jumpedThisTick
+
+    if (this.sliding) {
+      const desiredMovement = {
+        x:
+          this.slideDirection.x *
+          this.slideSpeed *
+          deltaTime,
+        y: 0,
+        z:
+          this.slideDirection.z *
+          this.slideSpeed *
+          deltaTime,
+      }
+
+      const corrected =
+        this.collision.computeCharacterMovement(
+          this.character,
+          desiredMovement
+        )
+
+      const position =
+        this.collision.applyCharacterMovement(
+          this.character,
+          corrected
+        )
+
+      const correctedPlanarVelocity = {
+        x:
+          corrected.x /
+          deltaTime,
+        z:
+          corrected.z /
+          deltaTime,
+      }
+
+      this.setLastPlanarVelocity(
+        correctedPlanarVelocity.x,
+        correctedPlanarVelocity.z
+      )
+
+      if (!corrected.grounded) {
+        const carriedSpeed =
+          Math.hypot(
+            correctedPlanarVelocity.x,
+            correctedPlanarVelocity.z
+          )
+
+        this.stopSlide('ground_lost')
+
+        this.lastGrounded = false
+        this.verticalVelocity = 0
+
+        this.airVelocity = {
+          ...correctedPlanarVelocity,
+        }
+
+        this.airborneSpeedCap =
+          carriedSpeed
+
+        this.beginAirborneTracking(
+          position.y
+        )
+      } else {
+        this.lastGrounded = true
+
+        const actualPlanarSpeed =
+          Math.hypot(
+            correctedPlanarVelocity.x,
+            correctedPlanarVelocity.z
+          )
+
+        this.slideSlopeAcceleration =
+          computeSlideSlopeAcceleration(
+            corrected,
+            this.config.movement.gravity
+          )
+
+        const collisionLimitedSpeed =
+          Math.min(
+            this.slideSpeed,
+            actualPlanarSpeed
+          )
+
+        this.slideSpeed =
+          Math.max(
+            0,
+            collisionLimitedSpeed +
+              (
+                this.slideSlopeAcceleration -
+                this.config.movement
+                  .slideFlatDeceleration
+              ) *
+                deltaTime
+          )
+
+        this.slideElapsed +=
+          deltaTime
+
+        if (
+          this.slideSpeed <
+          this.config.movement
+            .slideExitSpeed
+        ) {
+          this.stopSlide(
+            'speed_below_exit'
+          )
+        } else if (
+          this.slideElapsed >=
+          this.config.movement
+            .slideMaxDuration
+        ) {
+          this.stopSlide(
+            'max_duration'
+          )
+        }
+      }
+
+      this.advanceLandingRecovery(
+        deltaTime
+      )
+
+      return this.createResult({
+        position,
+        grounded:
+          this.lastGrounded,
+        sprinting: false,
+        stance,
+        jumpedThisTick: false,
+        landedThisTick: false,
+        verticalVelocity:
+          this.verticalVelocity,
+        correctedMovement: {
+          x: corrected.x,
+          y: corrected.y,
+          z: corrected.z,
+        },
+        moveX,
+        moveForward,
+      })
+    }
 
     if (
       !hasPlanarMovement &&
@@ -586,34 +991,28 @@ export class PlayerMovementSystem {
         deltaTime
       )
 
-      return {
+      this.setLastPlanarVelocity(
+        0,
+        0
+      )
+
+      return this.createResult({
         position: this.getPosition(),
-        grounded: this.lastGrounded,
+        grounded:
+          this.lastGrounded,
         sprinting: false,
-        crouched: stance.crouched,
-        standBlocked:
-          stance.standBlocked,
+        stance,
         jumpedThisTick: false,
         landedThisTick: false,
         verticalVelocity: 0,
-        landingType:
-          this.landingType,
-        landingRecoveryMultiplier:
-          this.getLandingRecoveryMultiplier(),
-        landingRecoveryRemaining:
-          this.landingRecoveryRemaining,
-        landingImpactSpeed:
-          this.lastLandingImpactSpeed,
-        input: {
-          moveX,
-          moveY: moveForward,
-        },
         correctedMovement: {
           x: 0,
           y: 0,
           z: 0,
         },
-      }
+        moveX,
+        moveForward,
+      })
     }
 
     const requestedGroundSpeed =
@@ -684,6 +1083,20 @@ export class PlayerMovementSystem {
         corrected
       )
 
+    const correctedPlanarVelocity = {
+      x:
+        corrected.x /
+        deltaTime,
+      z:
+        corrected.z /
+        deltaTime,
+    }
+
+    this.setLastPlanarVelocity(
+      correctedPlanarVelocity.x,
+      correctedPlanarVelocity.z
+    )
+
     if (airborne) {
       this.updateAirborneTracking(
         position.y
@@ -729,12 +1142,7 @@ export class PlayerMovementSystem {
       this.verticalVelocity = 0
 
       this.airVelocity = {
-        x:
-          corrected.x /
-          deltaTime,
-        z:
-          corrected.z /
-          deltaTime,
+        ...correctedPlanarVelocity,
       }
     } else if (airborne) {
       this.lastGrounded = false
@@ -744,12 +1152,7 @@ export class PlayerMovementSystem {
         deltaTime
 
       this.airVelocity = {
-        x:
-          corrected.x /
-          deltaTime,
-        z:
-          corrected.z /
-          deltaTime,
+        ...correctedPlanarVelocity,
       }
     } else {
       this.lastGrounded =
@@ -761,12 +1164,7 @@ export class PlayerMovementSystem {
         )
 
         this.airVelocity = {
-          x:
-            corrected.x /
-            deltaTime,
-          z:
-            corrected.z /
-            deltaTime,
+          ...correctedPlanarVelocity,
         }
 
         this.airborneSpeedCap =
@@ -785,38 +1183,27 @@ export class PlayerMovementSystem {
       )
     }
 
-    return {
+    return this.createResult({
       position,
-      grounded: this.lastGrounded,
+      grounded:
+        this.lastGrounded,
       sprinting:
         this.lastGrounded
           ? sprinting
           : false,
-      crouched: stance.crouched,
-      standBlocked:
-        stance.standBlocked,
+      stance,
       jumpedThisTick,
       landedThisTick,
       verticalVelocity:
         this.verticalVelocity,
-      landingType:
-        this.landingType,
-      landingRecoveryMultiplier:
-        this.getLandingRecoveryMultiplier(),
-      landingRecoveryRemaining:
-        this.landingRecoveryRemaining,
-      landingImpactSpeed:
-        this.lastLandingImpactSpeed,
-      input: {
-        moveX,
-        moveY: moveForward,
-      },
       correctedMovement: {
         x: corrected.x,
         y: corrected.y,
         z: corrected.z,
       },
-    }
+      moveX,
+      moveForward,
+    })
   }
 
   getPosition() {
