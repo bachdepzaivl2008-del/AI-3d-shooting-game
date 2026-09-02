@@ -129,9 +129,16 @@ export class Simulation {
       x:
         movement.correctedMovement.x /
         deltaTime,
+      // CharacterController may apply tiny vertical contact
+      // corrections while remaining grounded. Those corrections
+      // are collision resolution, not gameplay vertical velocity.
+      // Until Jump/Gravity owns Y velocity, grounded gameplay
+      // velocity must remain exactly zero.
       y:
-        movement.correctedMovement.y /
-        deltaTime,
+        movement.grounded
+          ? 0
+          : movement.correctedMovement.y /
+            deltaTime,
       z:
         movement.correctedMovement.z /
         deltaTime,
