@@ -40,7 +40,7 @@ function degToMouseDelta(degrees) {
 
 async function createHarness(sourceId, yawDegrees = 0) {
   const authority =
-    await LocalAuthorityHost.create(gameConfig)
+    await LocalAuthorityHost.create(testConfig)
 
   const sequencer =
     new IntentSequencer(sourceId)
