@@ -52,7 +52,7 @@ Final verification confirmed:
 - Collision foundation regression: PASS
 
 ## Current task
-**P2-MOVE-006 — Landing Slowdown (OPEN / IN IMPLEMENTATION)**
+**P2-MOVE-007 — Slide (NEXT / NOT STARTED)**
 
 Rule: a FAIL blocks the next dependent implementation unless explicitly registered as non-blocking PASS WITH ISSUES.
 
@@ -368,3 +368,20 @@ Verification required:
 - npm run character:test
 - npm run build
 - browser: normal Jump landing shows standard recovery; SPEED dips then returns; ordinary step traversal does not show landing recovery.
+
+
+## P2-MOVE-006 closure
+**PASS WITH ISSUES / CLOSED**
+
+Verification:
+- Landing Slowdown regression PASS.
+- Browser behavior works correctly.
+- Standard/Hard landing classification and recovery telemetry behave as intended.
+
+Non-blocking feel observation:
+- Standard Landing at 0.85x for 0.18 s is difficult to perceive in the current sparse test scene.
+- This is expected to be revisited during instrumented playtest / movement-feel tuning because the GDD marks Landing Slowdown values as Prototype / Playtest Required.
+- No canonical value is changed at this stage.
+
+Next canonical Stage 1 item:
+**P2-MOVE-007 — Slide entry / exit / momentum / slope behavior**
