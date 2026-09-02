@@ -26,9 +26,13 @@ export const gameConfig = {
   },
 
   movement: {
-    // IIV technical placeholder for the first movement integration pass.
-    // This is NOT a locked balance value.
-    baseSpeed: 6,
+    // Core Gameplay Systems 68B IIV:
+    // AR/Base Normal Ground Speed.
+    baseSpeed: 5.5,
+
+    // Core Gameplay Systems 68B IIV:
+    // Sprint = 1.25x current weapon Normal Movement Speed.
+    sprintMultiplier: 1.25,
 
     // Rapier snap-to-ground requires a slight downward component.
     // Keep the bias tiny so it doesn't materially reduce planar speed.
