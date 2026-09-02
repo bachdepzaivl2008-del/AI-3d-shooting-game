@@ -125,6 +125,108 @@ export class RapierCollisionWorld {
     }
   }
 
+  createCapsuleShape(totalHeight, radius) {
+    const halfHeight = Math.max(
+      0,
+      (totalHeight - radius * 2) / 2
+    )
+
+    return new this.RAPIER.Capsule(
+      halfHeight,
+      radius
+    )
+  }
+
+  canResizeCharacterHeight(character, totalHeight) {
+    if (totalHeight <= character.totalHeight) {
+      return true
+    }
+
+    const current =
+      this.getCharacterPosition(character)
+
+    const bottomY =
+      current.y -
+      character.totalHeight / 2
+
+    const targetPosition = {
+      x: current.x,
+      y:
+        bottomY +
+        totalHeight / 2,
+      z: current.z,
+    }
+
+    const targetShape =
+      this.createCapsuleShape(
+        totalHeight,
+        character.radius
+      )
+
+    const hit =
+      this.world.intersectionWithShape(
+        targetPosition,
+        {
+          x: 0,
+          y: 0,
+          z: 0,
+          w: 1,
+        },
+        targetShape,
+        undefined,
+        undefined,
+        character.collider
+      )
+
+    return hit === null
+  }
+
+  setCharacterHeight(character, totalHeight) {
+    if (
+      totalHeight ===
+      character.totalHeight
+    ) {
+      return this.getCharacterPosition(
+        character
+      )
+    }
+
+    const current =
+      this.getCharacterPosition(character)
+
+    const bottomY =
+      current.y -
+      character.totalHeight / 2
+
+    const targetPosition = {
+      x: current.x,
+      y:
+        bottomY +
+        totalHeight / 2,
+      z: current.z,
+    }
+
+    character.collider.setShape(
+      this.createCapsuleShape(
+        totalHeight,
+        character.radius
+      )
+    )
+
+    character.collider.setTranslation(
+      targetPosition
+    )
+
+    character.totalHeight =
+      totalHeight
+
+    this.world.step()
+
+    return this.getCharacterPosition(
+      character
+    )
+  }
+
   applyCharacterMovement(character, movement) {
     const current = character.collider.translation()
 
