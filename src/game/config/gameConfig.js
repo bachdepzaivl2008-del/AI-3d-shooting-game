@@ -14,6 +14,7 @@ export const gameConfig = {
 
     character: {
       standingHeight: 1.8,
+      crouchHeight: 1.2,
       radius: 0.35,
       stepHeight: 0.35,
       maxSlopeDegrees: 45,
@@ -33,6 +34,10 @@ export const gameConfig = {
     // Core Gameplay Systems 68B IIV:
     // Sprint = 1.25x current weapon Normal Movement Speed.
     sprintMultiplier: 1.25,
+
+    // Core Gameplay Systems 68B:
+    // crouch uses 60% of current weapon Normal Movement Speed.
+    crouchMultiplier: 0.6,
 
     // Runtime movement uses Rapier's built-in snap-to-ground directly.
     // The diagnostic sweep proved that any synthetic downward bias can
@@ -54,7 +59,13 @@ export const gameConfig = {
       z: 5,
     },
 
-    cameraEyeOffsetY: 0.75,
+    // Core Gameplay Systems 68C canonical eye heights.
+    standingEyeHeight: 1.62,
+    crouchEyeHeight: 1.0,
+
+    // Presentation-only interpolation rate (implementation-owned).
+    // This does not alter the authoritative collider/stance timing.
+    cameraEyeTransitionRate: 14,
   },
 
   world: {
