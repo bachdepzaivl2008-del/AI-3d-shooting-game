@@ -235,3 +235,19 @@ Initial `look:test` result:
 Current action:
 - print authoritative yaw, start/end position, deltaX and deltaZ before changing implementation or tolerances,
 - keep P2-MOVE-002 OPEN until the mismatch is measured.
+
+
+## P2-MOVE-002 diagnostic follow-up
+Measured camera-relative result:
+- yaw = 90° exactly,
+- deltaZ ≈ 0,
+- deltaX ≈ 5.8993 m after 60 movement ticks,
+- expected deltaX = 6.0 m.
+
+Interpretation:
+- camera-relative axis rotation is correct,
+- remaining error is approximately one 0.1 m movement tick,
+- do not change yaw logic or test tolerance yet.
+
+Next diagnostic:
+- record the first five and final per-tick authoritative displacements to locate which tick loses movement.

@@ -123,6 +123,9 @@ const start = {
     .position,
 }
 
+const stepSamples = []
+let previousPosition = { ...start }
+
 for (
   let tick = 0;
   tick < 60;
@@ -141,6 +144,43 @@ for (
   )
 
   movementAuthority.step()
+
+  const current =
+    movementAuthority
+      .getState()
+      .player
+      .position
+
+  if (
+    tick < 5 ||
+    tick === 59
+  ) {
+    stepSamples.push({
+      tick: tick + 1,
+      deltaX:
+        current.x -
+        previousPosition.x,
+      deltaZ:
+        current.z -
+        previousPosition.z,
+      position: {
+        x: current.x,
+        y: current.y,
+        z: current.z,
+      },
+      grounded:
+        movementAuthority
+          .getState()
+          .player
+          .grounded,
+    })
+  }
+
+  previousPosition = {
+    x: current.x,
+    y: current.y,
+    z: current.z,
+  }
 }
 
 const moved =
@@ -168,6 +208,7 @@ const movementDiagnostic = {
     (moved.orientation.yaw *
       180) /
     Math.PI,
+  stepSamples,
 }
 
 console.log(
