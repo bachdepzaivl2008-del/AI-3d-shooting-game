@@ -125,6 +125,18 @@ export class Simulation {
       z: movement.position.z,
     }
 
+    this.state.player.velocity = {
+      x:
+        movement.correctedMovement.x /
+        deltaTime,
+      y:
+        movement.correctedMovement.y /
+        deltaTime,
+      z:
+        movement.correctedMovement.z /
+        deltaTime,
+    }
+
     this.state.player.grounded =
       movement.grounded
 
