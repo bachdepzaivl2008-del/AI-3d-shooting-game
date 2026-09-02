@@ -39,6 +39,16 @@ export const gameConfig = {
     // crouch uses 60% of current weapon Normal Movement Speed.
     crouchMultiplier: 0.6,
 
+    // Core Gameplay Systems 68B Jump IIVs.
+    gravity: 20,
+    jumpVerticalVelocity: 6.6,
+
+    // GDD requires reduced air steering and forbids airborne
+    // horizontal speed gain. Exact steering responsiveness is not
+    // numerically locked, so this is an implementation-owned
+    // technical value for the first Jump slice.
+    airSteeringRate: 6,
+
     // Runtime movement uses Rapier's built-in snap-to-ground directly.
     // The diagnostic sweep proved that any synthetic downward bias can
     // intermittently shorten/zero planar movement ticks at canonical speeds.
