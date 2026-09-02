@@ -4,11 +4,27 @@ import { gameConfig } from '../src/game/config/gameConfig.js'
 import { LocalAuthorityHost } from '../src/game/core/LocalAuthorityHost.js'
 import { IntentSequencer } from '../src/shared/intents/IntentSequencer.js'
 
-const DT = gameConfig.simulation.fixedDeltaTime
-const NORMAL_SPEED = gameConfig.movement.baseSpeed
+const testConfig = {
+  ...gameConfig,
+  cube: {
+    ...gameConfig.cube,
+    // Keep the debug cube out of the open-ground velocity fixture.
+    // The default spawn at z=5 moving yaw=0 forward reaches the
+    // cube at the origin within one second and turns this into a
+    // collision/autostep test instead of a pure velocity test.
+    startPosition: {
+      x: 100,
+      y: gameConfig.cube.startPosition.y,
+      z: 100,
+    },
+  },
+}
+
+const DT = testConfig.simulation.fixedDeltaTime
+const NORMAL_SPEED = testConfig.movement.baseSpeed
 const SPRINT_SPEED =
-  gameConfig.movement.baseSpeed *
-  gameConfig.movement.sprintMultiplier
+  testConfig.movement.baseSpeed *
+  testConfig.movement.sprintMultiplier
 
 function nearlyEqual(actual, expected, epsilon = 0.02) {
   return Math.abs(actual - expected) <= epsilon
@@ -18,7 +34,7 @@ function degToMouseDelta(degrees) {
   const radians = degrees * Math.PI / 180
   return (
     radians /
-    gameConfig.look.mouseSensitivityRadiansPerPixel
+    testConfig.look.mouseSensitivityRadiansPerPixel
   )
 }
 
