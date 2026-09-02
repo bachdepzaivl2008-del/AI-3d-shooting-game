@@ -31,6 +31,8 @@ export function createInitialGameState(config, runtime) {
       },
       grounded: true,
       sprinting: false,
+      crouched: false,
+      standBlocked: false,
       lastInputSequence: 0,
     },
   }
