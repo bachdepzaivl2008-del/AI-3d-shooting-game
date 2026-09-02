@@ -144,13 +144,18 @@ export class PlayerMovementSystem {
         yaw
       )
 
-    const distance =
-      this.config.movement.baseSpeed *
-      deltaTime
-
     const hasPlanarMovement =
       direction.x !== 0 ||
       direction.z !== 0
+
+    const sprintRequested =
+      input?.sprint === true &&
+      input?.fire !== true &&
+      input?.ads !== true
+
+    const sprinting =
+      hasPlanarMovement &&
+      sprintRequested
 
     if (!hasPlanarMovement) {
       // Critical invariant:
@@ -166,6 +171,7 @@ export class PlayerMovementSystem {
       return {
         position: this.getPosition(),
         grounded: this.lastGrounded,
+        sprinting: false,
         input: {
           moveX,
           moveY: moveForward,
@@ -177,6 +183,17 @@ export class PlayerMovementSystem {
         },
       }
     }
+
+    const speedMultiplier =
+      sprinting
+        ? this.config.movement
+            .sprintMultiplier
+        : 1
+
+    const distance =
+      this.config.movement.baseSpeed *
+      speedMultiplier *
+      deltaTime
 
     const desiredMovement = {
       x: direction.x * distance,
@@ -204,6 +221,7 @@ export class PlayerMovementSystem {
     return {
       position,
       grounded: this.lastGrounded,
+      sprinting,
       input: {
         moveX,
         moveY: moveForward,
