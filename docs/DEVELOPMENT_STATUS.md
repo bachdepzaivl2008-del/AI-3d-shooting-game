@@ -52,7 +52,7 @@ Final verification confirmed:
 - Collision foundation regression: PASS
 
 ## Current task
-**P2-MOVE-005 — Jump + Gravity (OPEN / IN IMPLEMENTATION)**
+**P2-MOVE-006 — Landing Slowdown (OPEN / IN IMPLEMENTATION)**
 
 Rule: a FAIL blocks the next dependent implementation unless explicitly registered as non-blocking PASS WITH ISSUES.
 
@@ -319,3 +319,52 @@ Verification required:
 - npm run character:test
 - npm run build
 - browser: Space launches, AIRBORNE true, VEL Y rises/falls, player returns to ground, held Space does not auto-bunny-hop.
+
+
+## P2-MOVE-005 closure
+**PASS / CLOSED ✅**
+
+User verification confirms:
+- Jump + Gravity browser behavior works perfectly,
+- fixed-tick gravity / no-double-jump / held-Space semantics are accepted,
+- regression remained green.
+
+## P2-MOVE-006 — Landing Slowdown
+**IMPLEMENTED / AWAITING VERIFICATION**
+
+Canonical Core Gameplay 68B values:
+- Standard Landing: retain 85% horizontal speed; recovery 0.18 s.
+- Hard Landing: vertical impact speed >= 10 m/s; retain 70% horizontal speed; recovery 0.30 s.
+- Landing Slowdown triggers only from a real airborne-to-ground landing.
+- Ordinary step traversal is not a landing.
+- Values remain Prototype / Playtest Required.
+
+Source gap / implementation-owned detail:
+- the source locks the retained-speed multiplier and recovery duration but does not define the recovery interpolation curve,
+- the first implementation uses deterministic linear recovery from the canonical retained multiplier back to 1.0 over the canonical duration,
+- this adds no new gameplay constant and is explicitly playtest-tunable later.
+
+Implementation:
+- actual airborne vertical excursion is tracked,
+- <= Step Height + controller offset traversal is classified as ordinary traversal and cannot trigger Landing Slowdown,
+- real landing captures estimated vertical impact speed,
+- Standard vs Hard classification is authoritative,
+- recovery multiplier applies to Normal / Sprint / Crouch ground target speed and to immediate post-landing Jump takeoff speed,
+- recovery timer advances at fixed simulation tick rate,
+- no fall-damage behavior is added,
+- authoritative landingType / multiplier / remaining / impact speed telemetry,
+- landing:test covers Standard, Hard and ordinary-step exclusion.
+
+Verification required:
+- npm run landing:test
+- npm run jump:test
+- npm run crouch:test
+- npm run sprint:test
+- npm run velocity:test
+- npm run movement:test
+- npm run look:test
+- npm run foundation:test
+- npm run collision:test
+- npm run character:test
+- npm run build
+- browser: normal Jump landing shows standard recovery; SPEED dips then returns; ordinary step traversal does not show landing recovery.
