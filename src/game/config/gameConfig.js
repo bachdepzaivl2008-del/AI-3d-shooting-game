@@ -49,6 +49,13 @@ export const gameConfig = {
     // technical value for the first Jump slice.
     airSteeringRate: 6,
 
+    // Core Gameplay Systems 68B Landing Slowdown IIVs.
+    standardLandingRetainMultiplier: 0.85,
+    standardLandingRecoverySeconds: 0.18,
+    hardLandingImpactSpeed: 10,
+    hardLandingRetainMultiplier: 0.70,
+    hardLandingRecoverySeconds: 0.30,
+
     // Runtime movement uses Rapier's built-in snap-to-ground directly.
     // The diagnostic sweep proved that any synthetic downward bias can
     // intermittently shorten/zero planar movement ticks at canonical speeds.
