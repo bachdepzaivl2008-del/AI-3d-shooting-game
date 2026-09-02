@@ -18,7 +18,8 @@
     "foundation:test": "node scripts/stage0-foundation-test.js",
     "sprint:test": "node scripts/player-sprint-test.js",
     "movement-grounding:probe": "node scripts/movement-grounding-probe.js",
-    "velocity:test": "node scripts/player-velocity-test.js"
+    "velocity:test": "node scripts/player-velocity-test.js",
+    "crouch:test": "node scripts/player-crouch-test.js"
   },
   "devDependencies": {
     "vite": "^8.2.0"
