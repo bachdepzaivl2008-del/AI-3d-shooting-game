@@ -95,6 +95,7 @@ export class DebugOverlay {
         1
       )}°`,
       `GROUNDED: ${player.grounded}`,
+      `SPRINTING: ${player.sprinting}`,
       `INPUT SEQ: ${player.lastInputSequence}`,
     ].join('\n')
   }
