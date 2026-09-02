@@ -156,6 +156,21 @@ export class Simulation {
     this.state.player.standBlocked =
       movement.standBlocked
 
+    this.state.player.landedThisTick =
+      movement.landedThisTick
+
+    this.state.player.landingType =
+      movement.landingType
+
+    this.state.player.landingRecoveryMultiplier =
+      movement.landingRecoveryMultiplier
+
+    this.state.player.landingRecoveryRemaining =
+      movement.landingRecoveryRemaining
+
+    this.state.player.landingImpactSpeed =
+      movement.landingImpactSpeed
+
     if (inputIntent) {
       this.state.player.lastInputSequence =
         inputIntent.sequence
