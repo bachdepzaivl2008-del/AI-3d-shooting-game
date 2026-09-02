@@ -202,7 +202,7 @@ Not included yet:
 
 
 ## P2-MOVE-002 — Mouse Look & Camera Orientation
-**IMPLEMENTED / AWAITING VERIFICATION**
+**PASS / CLOSED**
 
 Implemented:
 - pointer-lock request on click,
@@ -366,3 +366,34 @@ Note:
 - the cube appears larger because the camera/player now starts much closer to it in first-person perspective; cube geometry/config was not intentionally increased in P2-MOVE-002.
 
 P2-MOVE-002 now awaits one final full regression pass before closure.
+
+
+## P2-MOVE-002 final verification
+Full regression PASS confirmed:
+- `npm run sim:test`: PASS
+- `npm run collision:test`: PASS
+- `npm run character:test`: PASS
+- `npm run movement:test`: PASS
+- `npm run look:test`: PASS
+- `npm run build`: PASS
+
+Browser verification also PASS:
+- first-person pointer-lock mouse look works,
+- WASD movement works,
+- movement follows authoritative camera yaw,
+- idle/look-only ticks no longer perturb later movement.
+
+P2-MOVE-002 is complete.
+
+### Next task
+**P2-MOVE-003 — Sprint**
+
+Planned scope:
+- authoritative sprint intent from Shift,
+- sprint speed multiplier / target speed as an IIV,
+- preserve camera-relative movement,
+- preserve collision, slope, step and ground-snap behavior,
+- headless sprint regression test,
+- no stamina limit because Sprint is unlimited in the locked design.
+
+Sprint is next because Slide depends on entering slide from sufficient movement speed, so Sprint should be established before Slide.
