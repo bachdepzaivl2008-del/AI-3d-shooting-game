@@ -52,7 +52,7 @@ Final verification confirmed:
 - Collision foundation regression: PASS
 
 ## Current task
-**P2-MOVE-007 — Slide (NEXT / NOT STARTED)**
+**P2-MOVE-007 — Slide (IMPLEMENTED / AWAITING VERIFICATION)**
 
 Rule: a FAIL blocks the next dependent implementation unless explicitly registered as non-blocking PASS WITH ISSUES.
 
@@ -385,3 +385,57 @@ Non-blocking feel observation:
 
 Next canonical Stage 1 item:
 **P2-MOVE-007 — Slide entry / exit / momentum / slope behavior**
+
+
+## P2-MOVE-007 — Slide entry / exit / momentum / slope behavior
+**IMPLEMENTED / AWAITING VERIFICATION**
+
+Canonical Core Gameplay 68B values:
+- entry requires grounded + crouch input + horizontal speed >= 6.0 m/s,
+- initial Slide speed = current horizontal speed + 0.4 m/s,
+- initial Slide speed cap = 9.0 m/s,
+- flat-ground deceleration = 2.5 m/s²,
+- maximum duration = 1.20 s,
+- exit below 4.5 m/s,
+- crouch release exits Slide,
+- valid-ground loss exits Slide,
+- Jump may override Slide and carries horizontal speed capped at current Sprint speed,
+- no hard cooldown,
+- no permanent Slide-Jump speed accumulation loop.
+
+Implementation:
+- authoritative Slide state and entry gating,
+- crouch press is edge-armed so one held crouch cannot immediately re-enter after an automatic Slide exit,
+- no hard cooldown: release/re-press crouch may immediately start another Slide once speed requirement is restored,
+- Slide uses the crouched physical envelope,
+- entry momentum is captured from actual prior authoritative planar velocity,
+- flat-ground speed decays deterministically at 2.5 m/s²,
+- wall/collision correction can reduce carried Slide speed,
+- ground loss exits Slide and carries corrected horizontal momentum into airborne state,
+- Slide Jump exits Slide and caps airborne horizontal carry at Sprint speed,
+- slope response uses gravity projected along actual corrected surface travel:
+  - uphill adds momentum loss,
+  - downhill can preserve/extend momentum,
+  - no hidden slope-speed bonus constant was introduced,
+- debug telemetry exposes SLIDING / SLIDE SPEED / SLIDE TIME / EXIT / SLOPE ACCEL,
+- slide:test covers entry threshold, initial boost/cap, flat decay, release exit, automatic exit, no same-hold reentry, no hard cooldown, Slide Jump cap, and slope acceleration sign.
+
+Source-gap interpretation:
+- the GDD does not specify active steering strength while Sliding.
+- First implementation preserves the entry momentum direction instead of inventing a new steering constant.
+- This remains eligible for later playtest tuning if the GDD is extended.
+
+Verification required:
+- npm run slide:test
+- npm run landing:test
+- npm run jump:test
+- npm run crouch:test
+- npm run sprint:test
+- npm run velocity:test
+- npm run movement:test
+- npm run look:test
+- npm run foundation:test
+- npm run collision:test
+- npm run character:test
+- npm run build
+- browser: Sprint first, then press Ctrl while >=6.0 m/s; camera/capsule crouches and SLIDING becomes true; releasing Ctrl exits.
