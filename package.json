@@ -15,7 +15,8 @@
     "movement:test": "node scripts/player-movement-test.js",
     "look:test": "node scripts/player-look-test.js",
     "movement-transition:probe": "node scripts/movement-transition-probe.js",
-    "foundation:test": "node scripts/stage0-foundation-test.js"
+    "foundation:test": "node scripts/stage0-foundation-test.js",
+    "sprint:test": "node scripts/player-sprint-test.js"
   },
   "devDependencies": {
     "vite": "^8.2.0"
