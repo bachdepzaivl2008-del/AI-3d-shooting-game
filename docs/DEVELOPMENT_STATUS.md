@@ -52,7 +52,7 @@ Final verification confirmed:
 - Collision foundation regression: PASS
 
 ## Current task
-**P2-MOVE-004 — Crouch & Camera Eye Height (OPEN / IN IMPLEMENTATION)**
+**P2-MOVE-005 — Jump + Gravity (OPEN / IN IMPLEMENTATION)**
 
 Rule: a FAIL blocks the next dependent implementation unless explicitly registered as non-blocking PASS WITH ISSUES.
 
@@ -269,3 +269,53 @@ Verification required:
 - npm run character:test
 - npm run build
 - browser: Ctrl lowers camera, movement slows to ~3.30 m/s, CROUCHED true, release returns standing in clear space.
+
+
+## P2-MOVE-004 closure
+**PASS / CLOSED ✅**
+
+User verification confirms:
+- full regression PASS,
+- browser Crouch works correctly,
+- camera eye-height transition feels correct,
+- authoritative crouch envelope/speed/stand-clearance contract is accepted.
+
+## P2-MOVE-005 — Jump + Gravity
+**IMPLEMENTED / AWAITING VERIFICATION**
+
+Canonical Core Gameplay 68B values:
+- Gravity IIV = 20 m/s²,
+- Jump vertical velocity IIV = 6.6 m/s,
+- level-ground apex target ≈ 1.09 m,
+- No Double Jump,
+- airborne steering is reduced and may not create speed gain above carried takeoff speed.
+
+Implemented:
+- authoritative jump press-edge handling,
+- persistent vertical velocity + fixed-tick gravity,
+- constant-acceleration vertical integration,
+- vertical collision through shared Rapier CharacterController,
+- no held-Space auto-repeat after landing,
+- no Double Jump after release/re-press in air,
+- second Jump becomes legal after landing + input release + new press,
+- crouch-to-jump requires valid standing capsule clearance,
+- blocked low-ceiling Jump remains crouched,
+- airborne planar speed cap prevents gaining Sprint speed after a Normal-speed takeoff,
+- reduced air steering uses implementation-owned initial steering rate = 6 / s because GDD does not lock an exact numeric steering responsiveness,
+- AIRBORNE debug telemetry,
+- jump:test added.
+
+Landing Slowdown is intentionally NOT included here; it remains the next separate canonical Stage 1 slice.
+
+Verification required:
+- npm run jump:test
+- npm run crouch:test
+- npm run sprint:test
+- npm run velocity:test
+- npm run movement:test
+- npm run look:test
+- npm run foundation:test
+- npm run collision:test
+- npm run character:test
+- npm run build
+- browser: Space launches, AIRBORNE true, VEL Y rises/falls, player returns to ground, held Space does not auto-bunny-hop.
