@@ -416,12 +416,9 @@ export class PlayerMovementSystem {
         }
 
         this.airborneSpeedCap =
-          Math.max(
-            takeoffSpeed,
-            Math.hypot(
-              this.airVelocity.x,
-              this.airVelocity.z
-            )
+          Math.hypot(
+            this.airVelocity.x,
+            this.airVelocity.z
           )
 
         this.verticalVelocity =
@@ -470,13 +467,21 @@ export class PlayerMovementSystem {
           stance.crouched,
       })
 
+    const requestedAirSpeed =
+      this.computeGroundSpeed({
+        sprinting:
+          hasPlanarMovement &&
+          sprintRequested,
+        crouched: false,
+      })
+
     let planarVelocity
 
     if (airborne) {
       planarVelocity =
         this.updateAirVelocity(
           direction,
-          requestedGroundSpeed,
+          requestedAirSpeed,
           deltaTime
         )
     } else {
@@ -557,6 +562,25 @@ export class PlayerMovementSystem {
     } else {
       this.lastGrounded =
         corrected.grounded
+
+      if (!corrected.grounded) {
+        this.airVelocity = {
+          x:
+            corrected.x /
+            deltaTime,
+          z:
+            corrected.z /
+            deltaTime,
+        }
+
+        this.airborneSpeedCap =
+          Math.hypot(
+            this.airVelocity.x,
+            this.airVelocity.z
+          )
+
+        this.verticalVelocity = 0
+      }
     }
 
     return {
