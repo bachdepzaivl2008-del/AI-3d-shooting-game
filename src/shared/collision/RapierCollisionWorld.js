@@ -53,20 +53,20 @@ export class RapierCollisionWorld {
       (totalHeight - radius * 2) / 2
     )
 
-    const bodyDesc =
-      this.RAPIER.RigidBodyDesc.kinematicPositionBased()
-        .setTranslation(position.x, position.y, position.z)
-
-    const body = this.world.createRigidBody(bodyDesc)
-
     const colliderDesc = this.RAPIER.ColliderDesc.capsule(
       halfHeight,
       radius
+    ).setTranslation(
+      position.x,
+      position.y,
+      position.z
     )
 
+    // CharacterController is driven directly by the collider.
+    // This avoids the extra kinematic-body contact-resolution step,
+    // which can intermittently drop/shorten grounded movement ticks.
     const collider = this.world.createCollider(
-      colliderDesc,
-      body
+      colliderDesc
     )
 
     const controller =
@@ -84,7 +84,6 @@ export class RapierCollisionWorld {
     this.characterControllers.add(controller)
 
     return {
-      body,
       collider,
       controller,
       totalHeight,
@@ -116,10 +115,20 @@ export class RapierCollisionWorld {
     }
   }
 
-  applyCharacterMovement(character, movement) {
-    const current = character.body.translation()
+  getCharacterPosition(character) {
+    const position = character.collider.translation()
 
-    character.body.setNextKinematicTranslation({
+    return {
+      x: position.x,
+      y: position.y,
+      z: position.z,
+    }
+  }
+
+  applyCharacterMovement(character, movement) {
+    const current = character.collider.translation()
+
+    character.collider.setTranslation({
       x: current.x + movement.x,
       y: current.y + movement.y,
       z: current.z + movement.z,
@@ -127,13 +136,7 @@ export class RapierCollisionWorld {
 
     this.world.step()
 
-    const updated = character.body.translation()
-
-    return {
-      x: updated.x,
-      y: updated.y,
-      z: updated.z,
-    }
+    return this.getCharacterPosition(character)
   }
 
   castRay(origin, direction, maxDistance, solid = true) {
