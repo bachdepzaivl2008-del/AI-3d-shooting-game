@@ -170,6 +170,55 @@ export class PlayerMovementSystem {
     this.landingRecoveryStartMultiplier = 1
     this.landingType = 'none'
     this.lastLandingImpactSpeed = 0
+
+    this.airborneStartY = null
+    this.airborneMinY = null
+    this.airborneMaxY = null
+  }
+
+  beginAirborneTracking(y) {
+    this.airborneStartY = y
+    this.airborneMinY = y
+    this.airborneMaxY = y
+  }
+
+  updateAirborneTracking(y) {
+    if (this.airborneStartY === null) {
+      this.beginAirborneTracking(y)
+      return
+    }
+
+    this.airborneMinY =
+      Math.min(
+        this.airborneMinY,
+        y
+      )
+
+    this.airborneMaxY =
+      Math.max(
+        this.airborneMaxY,
+        y
+      )
+  }
+
+  getAirborneVerticalRange() {
+    if (
+      this.airborneMinY === null ||
+      this.airborneMaxY === null
+    ) {
+      return 0
+    }
+
+    return (
+      this.airborneMaxY -
+      this.airborneMinY
+    )
+  }
+
+  resetAirborneTracking() {
+    this.airborneStartY = null
+    this.airborneMinY = null
+    this.airborneMaxY = null
   }
 
   getLandingRecoveryMultiplier() {
@@ -516,6 +565,10 @@ export class PlayerMovementSystem {
           this.config.movement
             .jumpVerticalVelocity
 
+        this.beginAirborneTracking(
+          this.getPosition().y
+        )
+
         this.lastGrounded = false
       }
     }
@@ -631,13 +684,28 @@ export class PlayerMovementSystem {
         corrected
       )
 
+    if (airborne) {
+      this.updateAirborneTracking(
+        position.y
+      )
+    }
+
     const landed =
       corrected.grounded &&
       this.verticalVelocity <= 0 &&
       airborne
 
     if (landed) {
-      landedThisTick = true
+      const characterConfig =
+        this.config.collision.character
+
+      const realAirborneLanding =
+        this.getAirborneVerticalRange() >
+        characterConfig.stepHeight +
+          characterConfig.controllerOffset
+
+      landedThisTick =
+        realAirborneLanding
 
       const impactSpeed =
         Math.max(
@@ -649,9 +717,13 @@ export class PlayerMovementSystem {
           )
         )
 
-      this.triggerLandingRecovery(
-        impactSpeed
-      )
+      if (realAirborneLanding) {
+        this.triggerLandingRecovery(
+          impactSpeed
+        )
+      }
+
+      this.resetAirborneTracking()
 
       this.lastGrounded = true
       this.verticalVelocity = 0
@@ -684,6 +756,10 @@ export class PlayerMovementSystem {
         corrected.grounded
 
       if (!corrected.grounded) {
+        this.beginAirborneTracking(
+          position.y
+        )
+
         this.airVelocity = {
           x:
             corrected.x /
