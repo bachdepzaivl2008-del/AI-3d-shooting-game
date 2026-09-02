@@ -171,6 +171,21 @@ export class Simulation {
     this.state.player.landingImpactSpeed =
       movement.landingImpactSpeed
 
+    this.state.player.sliding =
+      movement.sliding
+
+    this.state.player.slideSpeed =
+      movement.slideSpeed
+
+    this.state.player.slideElapsed =
+      movement.slideElapsed
+
+    this.state.player.slideExitReason =
+      movement.slideExitReason
+
+    this.state.player.slideSlopeAcceleration =
+      movement.slideSlopeAcceleration
+
     if (inputIntent) {
       this.state.player.lastInputSequence =
         inputIntent.sequence
