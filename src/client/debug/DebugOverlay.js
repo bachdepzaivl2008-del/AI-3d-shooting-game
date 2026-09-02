@@ -4,6 +4,14 @@ function fixed(value, digits = 2) {
     : '0.00'
 }
 
+function cleanVelocityComponent(value) {
+  if (!Number.isFinite(value)) return 0
+
+  return Math.abs(value) < 0.01
+    ? 0
+    : value
+}
+
 export class DebugOverlay {
   constructor() {
     this.element = document.createElement('pre')
@@ -47,17 +55,25 @@ export class DebugOverlay {
 
     const player = state.player
     const p = player.position
-    const velocity =
+    const rawVelocity =
       player.velocity ?? {
         x: 0,
         y: 0,
         z: 0,
       }
 
+    // Hide sub-centimeter-per-second floating/contact noise in
+    // telemetry without changing authoritative simulation state.
+    const velocity = {
+      x: cleanVelocityComponent(rawVelocity.x),
+      y: cleanVelocityComponent(rawVelocity.y),
+      z: cleanVelocityComponent(rawVelocity.z),
+    }
+
     const planarSpeed =
       Math.hypot(
-        velocity.x,
-        velocity.z
+        rawVelocity.x,
+        rawVelocity.z
       )
 
     const orientation = player.orientation
@@ -66,7 +82,7 @@ export class DebugOverlay {
       `FPS: ${fixed(this.smoothedFps, 0)}`,
       `SIM TICK: ${state.tick}`,
       `POS: ${fixed(p.x)}  ${fixed(p.y)}  ${fixed(p.z)}`,
-      `VEL: ${fixed(velocity.x)}  ${fixed(velocity.y)}  ${fixed(velocity.z)}`,
+      `VEL XYZ: ${fixed(velocity.x)}  ${fixed(velocity.y)}  ${fixed(velocity.z)}`,
       `SPEED: ${fixed(planarSpeed)} m/s`,
       `YAW/PITCH: ${fixed(
         orientation.yaw * 180 / Math.PI,
