@@ -93,6 +93,8 @@ export class DebugOverlay {
       )}°`,
       `GROUNDED: ${player.grounded}`,
       `SPRINTING: ${player.sprinting}`,
+      `CROUCHED: ${player.crouched}`,
+      `STAND BLOCKED: ${player.standBlocked}`,
       `INPUT SEQ: ${player.lastInputSequence}`,
     ].join('\n')
   }
