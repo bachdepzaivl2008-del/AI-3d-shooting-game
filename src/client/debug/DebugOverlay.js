@@ -96,6 +96,10 @@ export class DebugOverlay {
       `SPRINTING: ${player.sprinting}`,
       `CROUCHED: ${player.crouched}`,
       `STAND BLOCKED: ${player.standBlocked}`,
+      `LANDING: ${player.landingType}`,
+      `LAND MULT: ${fixed(player.landingRecoveryMultiplier, 2)}`,
+      `LAND RECOVERY: ${fixed(player.landingRecoveryRemaining, 2)} s`,
+      `IMPACT Y: ${fixed(player.landingImpactSpeed, 2)} m/s`,
       `INPUT SEQ: ${player.lastInputSequence}`,
     ].join('\n')
   }
