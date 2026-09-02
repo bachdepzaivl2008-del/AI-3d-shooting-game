@@ -182,3 +182,19 @@ Expected browser values on flat ground:
 - normal movement SPEED ≈ 5.50 m/s,
 - Sprint SPEED ≈ 6.88 m/s,
 - idle SPEED = 0.00 m/s.
+
+
+## Velocity XYZ semantics correction
+The isolated velocity regression still failed on grounded Y even with the cube removed.
+
+Root cause:
+- Rapier CharacterController may apply small vertical contact-resolution corrections while the character remains grounded,
+- those Y corrections are necessary for collision placement but are not gameplay vertical velocity,
+- exposing correctedMovement.y / dt directly as player.velocity.y makes grounded velocity telemetry semantically wrong and visually noisy.
+
+Runtime correction:
+- while grounded, authoritative player.velocity.y is now exactly 0,
+- X/Z continue to use actual corrected planar movement / fixedDeltaTime,
+- when airborne in future Jump/Gravity work, Y may again represent real vertical velocity.
+
+The velocity regression was also upgraded to aggregate all XYZ/speed failures across all cases before failing, so one axis no longer hides the rest of the diagnostic.
