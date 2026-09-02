@@ -160,3 +160,25 @@ Canonical movement values remain:
 - Sprint stamina = unlimited
 
 P2-MOVE-003 now only requires final browser verification before closure.
+
+
+## P2-MOVE-003 browser telemetry correction
+Browser observation:
+- VEL returned to 0 when stopped (expected),
+- while moving, VEL visibly flickered/jumped because the debug overlay derived velocity from render-frame snapshots.
+
+Root cause:
+- render runs around 120 FPS while authoritative simulation runs at 60 Hz,
+- some render frames see no new simulation tick, so render-derived velocity collapses to 0 between valid movement updates,
+- this is a telemetry/display defect, not evidence that authoritative Sprint itself is toggling.
+
+Fix:
+- authoritative player.velocity now lives in simulation state,
+- velocity is computed once per fixed simulation tick from correctedMovement / fixedDeltaTime,
+- DebugOverlay reads that simulation-owned velocity directly,
+- added planar SPEED readout in m/s for browser verification.
+
+Expected browser values on flat ground:
+- normal movement SPEED ≈ 5.50 m/s,
+- Sprint SPEED ≈ 6.88 m/s,
+- idle SPEED = 0.00 m/s.
