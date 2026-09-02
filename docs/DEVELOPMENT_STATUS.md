@@ -309,3 +309,26 @@ Next action:
   3. one yaw-only tick then camera-relative movement.
 
 This will isolate whether the issue is a generic idle→move transition or specifically look-related.
+
+
+## P2-MOVE-002 transition-probe result
+Three-case isolation result:
+1. fresh movement: ~6.0 m, zero anomalous ticks,
+2. one idle tick then movement: ~5.9 m, exactly one zero-displacement tick,
+3. one yaw-only tick then movement: same as case 2.
+
+Conclusion:
+- the defect is NOT mouse-look specific,
+- the defect is NOT camera-relative basis math,
+- a look-only tick behaves exactly like any other idle tick,
+- the common trigger is that an idle tick currently still feeds a downward snap translation into Rapier.
+
+Fix integrated:
+- only apply the tiny ground-snap downward bias while there is actual planar movement,
+- idle/look-only ticks now request zero character translation,
+- keep base speed, look sensitivity, collision settings, and test tolerances unchanged.
+
+Rationale:
+- snap-to-ground is needed while traversing horizontally across ground changes,
+- an idle character does not need a synthetic downward translation,
+- removing idle bias avoids perturbing the grounded controller state before movement begins.

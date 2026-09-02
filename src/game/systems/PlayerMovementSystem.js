@@ -147,11 +147,16 @@ export class PlayerMovementSystem {
       this.config.movement.baseSpeed *
       deltaTime
 
+    const hasPlanarMovement =
+      direction.x !== 0 ||
+      direction.z !== 0
+
     const desiredMovement = {
       x: direction.x * distance,
-      y:
-        -this.config.movement
-          .groundSnapBiasPerTick,
+      y: hasPlanarMovement
+        ? -this.config.movement
+            .groundSnapBiasPerTick
+        : 0,
       z: direction.z * distance,
     }
 
