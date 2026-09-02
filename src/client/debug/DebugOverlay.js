@@ -47,38 +47,18 @@ export class DebugOverlay {
 
     const player = state.player
     const p = player.position
-
-    let velocity = { x: 0, y: 0, z: 0 }
-
-    if (
-      this.previousPlayerPosition &&
-      this.previousSimulationTime !== null
-    ) {
-      const dt =
-        state.time - this.previousSimulationTime
-
-      if (dt > 0) {
-        velocity = {
-          x:
-            (p.x - this.previousPlayerPosition.x) /
-            dt,
-          y:
-            (p.y - this.previousPlayerPosition.y) /
-            dt,
-          z:
-            (p.z - this.previousPlayerPosition.z) /
-            dt,
-        }
+    const velocity =
+      player.velocity ?? {
+        x: 0,
+        y: 0,
+        z: 0,
       }
-    }
 
-    this.previousPlayerPosition = {
-      x: p.x,
-      y: p.y,
-      z: p.z,
-    }
-
-    this.previousSimulationTime = state.time
+    const planarSpeed =
+      Math.hypot(
+        velocity.x,
+        velocity.z
+      )
 
     const orientation = player.orientation
 
@@ -87,6 +67,7 @@ export class DebugOverlay {
       `SIM TICK: ${state.tick}`,
       `POS: ${fixed(p.x)}  ${fixed(p.y)}  ${fixed(p.z)}`,
       `VEL: ${fixed(velocity.x)}  ${fixed(velocity.y)}  ${fixed(velocity.z)}`,
+      `SPEED: ${fixed(planarSpeed)} m/s`,
       `YAW/PITCH: ${fixed(
         orientation.yaw * 180 / Math.PI,
         1
