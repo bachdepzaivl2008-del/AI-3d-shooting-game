@@ -190,7 +190,9 @@ async function runRampScenario(config) {
 
     collision.prepareQueries()
 
-    let finalPosition = character.body.translation()
+    let finalPosition =
+      collision.getCharacterPosition(character)
+
     let maxY = finalPosition.y
     let firstRiseTick = null
 
