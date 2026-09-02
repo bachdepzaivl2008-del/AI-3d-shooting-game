@@ -92,6 +92,7 @@ export class DebugOverlay {
         1
       )}°`,
       `GROUNDED: ${player.grounded}`,
+      `AIRBORNE: ${!player.grounded}`,
       `SPRINTING: ${player.sprinting}`,
       `CROUCHED: ${player.crouched}`,
       `STAND BLOCKED: ${player.standBlocked}`,
