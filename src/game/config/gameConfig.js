@@ -119,6 +119,18 @@ export const gameConfig = {
     groundColor: 0x4f7942,
   },
 
+  testArena: {
+    enemyDummy: {
+      position: {
+        x: 8,
+        y: 0.91,
+        z: 5,
+      },
+      team: 'red',
+      color: 0xcc3344,
+    },
+  },
+
   camera: {
     fov: 75,
     near: 0.1,
