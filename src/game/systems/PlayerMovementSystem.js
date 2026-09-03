@@ -1,5 +1,9 @@
 import { RapierCollisionWorld } from '../../shared/collision/RapierCollisionWorld.js'
 import { DashController } from '../movement/DashController.js'
+import {
+  resolveEnemySoftSeparation,
+  sweepDashAgainstEnemies,
+} from '../movement/PlayerBodyInteraction.js'
 
 function clampAxis(value) {
   if (!Number.isFinite(value)) return 0
@@ -267,6 +271,8 @@ export class PlayerMovementSystem {
 
     this.dashHeld = false
     this.dashAttackLockedThisTick = false
+    this.enemySeparationContactsThisTick = 0
+    this.dashEnemyContactId = null
 
     this.postDashAirVelocity = {
       x: 0,
@@ -275,6 +281,98 @@ export class PlayerMovementSystem {
 
     this.postDashAirborneSpeedCap =
       config.movement.baseSpeed
+
+    this.playerTeam = 'blue'
+    this.livingActors = []
+    this.enemySeparationContactsThisTick = 0
+    this.dashEnemyContactId = null
+  }
+
+  setLivingActors(actors) {
+    this.livingActors =
+      Array.isArray(actors)
+        ? actors
+        : []
+  }
+
+  applyEnemySoftSeparation(
+    correctedMovement
+  ) {
+    if (
+      this.livingActors.length === 0
+    ) {
+      return {
+        movement:
+          correctedMovement,
+        contacts: 0,
+      }
+    }
+
+    const current =
+      this.getPosition()
+
+    const proposedPosition = {
+      x:
+        current.x +
+        correctedMovement.x,
+      y:
+        current.y +
+        correctedMovement.y,
+      z:
+        current.z +
+        correctedMovement.z,
+    }
+
+    const separation =
+      resolveEnemySoftSeparation({
+        proposedPosition,
+        playerRadius:
+          this.character.radius,
+        playerTotalHeight:
+          this.character.totalHeight,
+        actors:
+          this.livingActors,
+        playerTeam:
+          this.playerTeam,
+        fallbackDirection: {
+          x:
+            -correctedMovement.x,
+          z:
+            -correctedMovement.z,
+        },
+      })
+
+    if (separation.contacts === 0) {
+      return {
+        movement:
+          correctedMovement,
+        contacts: 0,
+      }
+    }
+
+    const separatedDesired = {
+      x:
+        correctedMovement.x +
+        separation.correction.x,
+      y:
+        correctedMovement.y,
+      z:
+        correctedMovement.z +
+        separation.correction.z,
+    }
+
+    const separatedCorrected =
+      this.collision.computeCharacterMovement(
+        this.character,
+        separatedDesired
+      )
+
+    return {
+      movement:
+        separatedCorrected,
+      contacts:
+        separation.contacts,
+    }
   }
 
   beginAirborneTracking(y) {
@@ -681,6 +779,10 @@ export class PlayerMovementSystem {
       dashAttackLocked:
         this.dashAttackLockedThisTick ||
         this.dashController.active,
+      dashEnemyContactId:
+        this.dashEnemyContactId,
+      enemySeparationContacts:
+        this.enemySeparationContactsThisTick,
       input: {
         moveX,
         moveY: moveForward,
@@ -981,10 +1083,34 @@ export class PlayerMovementSystem {
         z: dashStep.z,
       }
 
+      const dashEnemyHit =
+        sweepDashAgainstEnemies({
+          startPosition:
+            this.getPosition(),
+          desiredMovement,
+          playerRadius:
+            this.character.radius,
+          playerTotalHeight:
+            this.character.totalHeight,
+          actors:
+            this.livingActors,
+          playerTeam:
+            this.playerTeam,
+        })
+
+      const enemyLimitedMovement =
+        dashEnemyHit?.movement ??
+        desiredMovement
+
+      if (dashEnemyHit) {
+        this.dashEnemyContactId =
+          dashEnemyHit.actorId
+      }
+
       const corrected =
         this.collision.computeCharacterMovement(
           this.character,
-          desiredMovement
+          enemyLimitedMovement
         )
 
       const position =
@@ -1007,15 +1133,32 @@ export class PlayerMovementSystem {
         correctedPlanarVelocity.z
       )
 
-      const blocked =
+      const enemyLimitedPlanarDistance =
+        Math.hypot(
+          enemyLimitedMovement.x,
+          enemyLimitedMovement.z
+        )
+
+      const worldBlocked =
         isDashTranslationBlocked(
           corrected,
-          dashStep.requestedDistance,
+          enemyLimitedPlanarDistance,
           {
             airborne:
               wasAirborne,
           }
         )
+
+      const blocked =
+        worldBlocked ||
+        dashEnemyHit !== null
+
+      const blockedReason =
+        worldBlocked
+          ? 'blocked'
+          : dashEnemyHit
+            ? 'enemy_blocked'
+            : 'blocked'
 
       if (wasAirborne) {
         this.updateAirborneTracking(
@@ -1083,6 +1226,7 @@ export class PlayerMovementSystem {
         requestedDistance:
           dashStep.requestedDistance,
         blocked,
+        blockedReason,
       })
 
       if (
@@ -1140,11 +1284,22 @@ export class PlayerMovementSystem {
           deltaTime,
       }
 
-      const corrected =
+      const initialCorrected =
         this.collision.computeCharacterMovement(
           this.character,
           desiredMovement
         )
+
+      const separation =
+        this.applyEnemySoftSeparation(
+          initialCorrected
+        )
+
+      const corrected =
+        separation.movement
+
+      this.enemySeparationContactsThisTick =
+        separation.contacts
 
       const position =
         this.collision.applyCharacterMovement(
@@ -1364,11 +1519,22 @@ export class PlayerMovementSystem {
         deltaTime,
     }
 
-    const corrected =
+    const initialCorrected =
       this.collision.computeCharacterMovement(
         this.character,
         desiredMovement
       )
+
+    const separation =
+      this.applyEnemySoftSeparation(
+        initialCorrected
+      )
+
+    const corrected =
+      separation.movement
+
+    this.enemySeparationContactsThisTick =
+      separation.contacts
 
     const position =
       this.collision.applyCharacterMovement(
