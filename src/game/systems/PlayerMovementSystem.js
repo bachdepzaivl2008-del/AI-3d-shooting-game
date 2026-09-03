@@ -267,6 +267,14 @@ export class PlayerMovementSystem {
 
     this.dashHeld = false
     this.dashAttackLockedThisTick = false
+
+    this.postDashAirVelocity = {
+      x: 0,
+      z: 0,
+    }
+
+    this.postDashAirborneSpeedCap =
+      config.movement.baseSpeed
   }
 
   beginAirborneTracking(y) {
@@ -768,6 +776,23 @@ export class PlayerMovementSystem {
       !this.dashController.active
 
     if (dashPressed) {
+      const preDashPlanarVelocity =
+        this.lastGrounded
+          ? {
+              ...this.lastPlanarVelocity,
+            }
+          : {
+              ...this.airVelocity,
+            }
+
+      const preDashAirborneSpeedCap =
+        this.lastGrounded
+          ? Math.hypot(
+              preDashPlanarVelocity.x,
+              preDashPlanarVelocity.z
+            )
+          : this.airborneSpeedCap
+
       const dashDirection =
         hasPlanarMovement
           ? direction
@@ -783,6 +808,13 @@ export class PlayerMovementSystem {
         )
 
       if (activation.activated) {
+        this.postDashAirVelocity = {
+          ...preDashPlanarVelocity,
+        }
+
+        this.postDashAirborneSpeedCap =
+          preDashAirborneSpeedCap
+
         if (this.sliding) {
           this.stopSlide('dash')
         }
@@ -1045,16 +1077,6 @@ export class PlayerMovementSystem {
         }
       }
 
-      this.airVelocity = {
-        ...correctedPlanarVelocity,
-      }
-
-      this.airborneSpeedCap =
-        Math.hypot(
-          this.airVelocity.x,
-          this.airVelocity.z
-        )
-
       this.dashController.finishMovementStep({
         stepTime:
           dashStep.stepTime,
@@ -1062,6 +1084,18 @@ export class PlayerMovementSystem {
           dashStep.requestedDistance,
         blocked,
       })
+
+      if (
+        !this.lastGrounded &&
+        !this.dashController.active
+      ) {
+        this.airVelocity = {
+          ...this.postDashAirVelocity,
+        }
+
+        this.airborneSpeedCap =
+          this.postDashAirborneSpeedCap
+      }
 
       if (!landedThisTick) {
         this.advanceLandingRecovery(
