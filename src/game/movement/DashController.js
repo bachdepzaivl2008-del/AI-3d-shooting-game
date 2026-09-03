@@ -134,6 +134,7 @@ export class DashController {
     stepTime,
     requestedDistance,
     blocked = false,
+    blockedReason = 'blocked',
   }) {
     if (!this.active) {
       return
@@ -154,7 +155,7 @@ export class DashController {
       )
 
     if (blocked) {
-      this.stop('blocked')
+      this.stop(blockedReason)
       return
     }
 
