@@ -64,6 +64,13 @@ export const gameConfig = {
     slideMaxDuration: 1.20,
     slideExitSpeed: 4.5,
 
+    // Core Gameplay Systems 68B Dash values.
+    dashCharges: 2,
+    dashDistance: 7.0,
+    dashDuration: 0.22,
+    dashRechargeSeconds: 4.5,
+    dashMinInterval: 0.25,
+
     // Runtime movement uses Rapier's built-in snap-to-ground directly.
     // The diagnostic sweep proved that any synthetic downward bias can
     // intermittently shorten/zero planar movement ticks at canonical speeds.
