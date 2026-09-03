@@ -186,6 +186,31 @@ export class Simulation {
     this.state.player.slideSlopeAcceleration =
       movement.slideSlopeAcceleration
 
+    this.state.player.dashing =
+      movement.dashing
+
+    this.state.player.dashCharges =
+      movement.dashCharges
+
+    this.state.player.dashRechargeTimers = [
+      ...movement.dashRechargeTimers,
+    ]
+
+    this.state.player.dashRemainingTime =
+      movement.dashRemainingTime
+
+    this.state.player.dashRemainingDistance =
+      movement.dashRemainingDistance
+
+    this.state.player.dashActivationLockRemaining =
+      movement.dashActivationLockRemaining
+
+    this.state.player.dashExitReason =
+      movement.dashExitReason
+
+    this.state.player.dashAttackLocked =
+      movement.dashAttackLocked
+
     if (inputIntent) {
       this.state.player.lastInputSequence =
         inputIntent.sequence
