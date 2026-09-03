@@ -84,17 +84,25 @@ function clampPlanarMagnitude(
 
 export function isDashTranslationBlocked(
   correctedMovement,
-  requestedDistance
+  requestedDistance,
+  {
+    airborne = false,
+  } = {}
 ) {
-  const actualPathDistance =
-    Math.hypot(
-      correctedMovement.x,
-      correctedMovement.y,
-      correctedMovement.z
-    )
+  const actualTravelDistance =
+    airborne
+      ? Math.hypot(
+          correctedMovement.x,
+          correctedMovement.z
+        )
+      : Math.hypot(
+          correctedMovement.x,
+          correctedMovement.y,
+          correctedMovement.z
+        )
 
   return (
-    actualPathDistance +
+    actualTravelDistance +
       DASH_BLOCK_EPSILON <
     requestedDistance
   )
@@ -970,7 +978,11 @@ export class PlayerMovementSystem {
       const blocked =
         isDashTranslationBlocked(
           corrected,
-          dashStep.requestedDistance
+          dashStep.requestedDistance,
+          {
+            airborne:
+              wasAirborne,
+          }
         )
 
       if (wasAirborne) {
