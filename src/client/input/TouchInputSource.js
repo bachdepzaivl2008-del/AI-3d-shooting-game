@@ -37,6 +37,7 @@ export class TouchInputSource {
 
     this.jump = false
     this.crouch = false
+    this.dash = false
 
     this.movePointerId = null
     this.moveOrigin = {
@@ -87,6 +88,12 @@ export class TouchInputSource {
         'CROUCH'
       )
 
+    this.dashButton =
+      createElement(
+        'mobile-action-button mobile-dash-button',
+        'DASH'
+      )
+
     this.orientationHint =
       createElement(
         'mobile-orientation-hint',
@@ -103,6 +110,7 @@ export class TouchInputSource {
       this.joystickBase,
       this.jumpButton,
       this.crouchButton,
+      this.dashButton,
       this.orientationHint
     )
 
@@ -194,6 +202,11 @@ export class TouchInputSource {
     this.bindHoldButton(
       this.crouchButton,
       'crouch'
+    )
+
+    this.bindHoldButton(
+      this.dashButton,
+      'dash'
     )
 
     window.addEventListener(
@@ -492,6 +505,7 @@ export class TouchInputSource {
 
     this.jump = false
     this.crouch = false
+    this.dash = false
 
     this.joystickKnob.style.transform =
       'translate(0px, 0px)'
@@ -505,6 +519,10 @@ export class TouchInputSource {
     )
 
     this.crouchButton.classList.remove(
+      'is-active'
+    )
+
+    this.dashButton.classList.remove(
       'is-active'
     )
   }
@@ -536,6 +554,7 @@ export class TouchInputSource {
         jump: this.jump,
         sprint,
         crouch: this.crouch,
+        dash: this.dash,
       }
     )
   }
@@ -587,6 +606,10 @@ export class TouchInputSource {
 
     this.unbindHoldButton(
       this.crouchButton
+    )
+
+    this.unbindHoldButton(
+      this.dashButton
     )
 
     window.removeEventListener(
