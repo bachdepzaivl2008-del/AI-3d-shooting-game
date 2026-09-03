@@ -25,7 +25,7 @@ const testConfig = {
       position: {
         x: 0,
         y: gameConfig.player.spawnPosition.y,
-        z: 3,
+        z: 4,
       },
     },
   },
