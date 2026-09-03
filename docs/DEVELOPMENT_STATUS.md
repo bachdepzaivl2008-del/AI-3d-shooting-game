@@ -512,3 +512,23 @@ PLAT-001 verification convenience:
 - append `?input=touch` to the browser URL to force the mobile touch-control layer on desktop for testing,
 - append `?input=desktop` to force desktop input mode,
 - this override is client-side diagnostics only and does not change simulation behavior.
+
+
+## PLAT-001 closure
+**PASS / CLOSED ✅**
+
+User verification confirms:
+- adaptive desktop input works correctly,
+- touch/mobile input layer works correctly,
+- forced `?input=touch` verification works,
+- joystick movement, touch look, Jump, Crouch/Slide and Auto-Sprint are usable without difficulty,
+- existing gameplay regression remains green.
+
+Cross-device release foundation is now established:
+- one shared browser build/link,
+- desktop and touch-primary mobile/tablet use different local input sources,
+- both feed the same authoritative PLAYER_INPUT contract,
+- future Dash / Fire / ADS / Reload / Weapon Switch touch controls will extend the same TouchInputSource as those systems are implemented.
+
+Return to canonical Stage 1 movement work:
+**P2-MOVE-007 — Slide remains the current gameplay task until final browser acceptance is recorded.**
