@@ -116,6 +116,9 @@ export class BrowserInputSource {
       crouch:
         this.keys.has('ControlLeft') ||
         this.keys.has('ControlRight'),
+      // Implementation-owned desktop binding.
+      // The GDD locks Dash behavior, not a physical key.
+      dash: this.keys.has('KeyE'),
     })
   }
 
