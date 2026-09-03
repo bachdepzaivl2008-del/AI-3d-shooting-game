@@ -3,7 +3,10 @@ import assert from 'node:assert/strict'
 import { gameConfig } from '../src/game/config/gameConfig.js'
 import { LocalAuthorityHost } from '../src/game/core/LocalAuthorityHost.js'
 import { IntentSequencer } from '../src/shared/intents/IntentSequencer.js'
-import { PlayerMovementSystem } from '../src/game/systems/PlayerMovementSystem.js'
+import {
+  PlayerMovementSystem,
+  isDashTranslationBlocked,
+} from '../src/game/systems/PlayerMovementSystem.js'
 
 const testConfig = {
   ...gameConfig,
@@ -584,6 +587,35 @@ assert.equal(
 
 slideDash.authority.dispose()
 
+
+// 8) Technical collision classification:
+// slope correction is not a solid-world block, but shortened path is.
+assert.equal(
+  isDashTranslationBlocked(
+    {
+      x: 0.424264,
+      y: 0.318198,
+      z: 0,
+    },
+    0.53033
+  ),
+  false,
+  'Walkable slope correction must not be misclassified as a blocked Dash'
+)
+
+assert.equal(
+  isDashTranslationBlocked(
+    {
+      x: 0.18,
+      y: 0,
+      z: 0,
+    },
+    0.53033
+  ),
+  true,
+  'Shortened swept translation into a wall must classify as blocked'
+)
+
 console.log(
   'Authoritative Dash test: PASS'
 )
@@ -608,4 +640,5 @@ console.log({
   airDashGravityContinues: true,
   blockedConsumesCharge: true,
   slideOverride: true,
+  slopeTraversalNotBlocked: true,
 })
