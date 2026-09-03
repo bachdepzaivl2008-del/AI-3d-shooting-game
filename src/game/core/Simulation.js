@@ -52,6 +52,26 @@ export class Simulation {
 
     this.ids = createGameIdAllocators()
 
+    this.enemyDummy = {
+      id: this.ids.entity.next(),
+      team:
+        config.testArena.enemyDummy.team,
+      alive: true,
+      position: {
+        ...config.testArena
+          .enemyDummy.position,
+      },
+      totalHeight:
+        config.collision.character
+          .standingHeight,
+      radius:
+        config.collision.character.radius,
+    }
+
+    this.movementSystem.setLivingActors([
+      this.enemyDummy,
+    ])
+
     this.events =
       new GameplayEventStream('simulation')
 
@@ -61,6 +81,8 @@ export class Simulation {
         playerId: this.ids.entity.next(),
         playerPosition:
           this.movementSystem.getPosition(),
+        enemyDummy:
+          this.enemyDummy,
       })
 
     this.events.emit(
