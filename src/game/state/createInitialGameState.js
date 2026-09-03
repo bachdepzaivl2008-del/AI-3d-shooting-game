@@ -43,6 +43,22 @@ export function createInitialGameState(config, runtime) {
       slideElapsed: 0,
       slideExitReason: 'none',
       slideSlopeAcceleration: 0,
+      dashing: false,
+      dashCharges:
+        config.movement.dashCharges,
+      dashRechargeTimers:
+        Array.from(
+          {
+            length:
+              config.movement.dashCharges,
+          },
+          () => 0
+        ),
+      dashRemainingTime: 0,
+      dashRemainingDistance: 0,
+      dashActivationLockRemaining: 0,
+      dashExitReason: 'none',
+      dashAttackLocked: false,
       lastInputSequence: 0,
     },
   }
