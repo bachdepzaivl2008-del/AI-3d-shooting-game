@@ -23,7 +23,8 @@
     "jump:test": "node scripts/player-jump-test.js",
     "landing:test": "node scripts/player-landing-test.js",
     "slide:test": "node scripts/player-slide-test.js",
-    "adaptive-input:test": "node scripts/adaptive-input-test.js"
+    "adaptive-input:test": "node scripts/adaptive-input-test.js",
+    "dash:test": "node scripts/player-dash-test.js"
   },
   "devDependencies": {
     "vite": "^8.2.0"
