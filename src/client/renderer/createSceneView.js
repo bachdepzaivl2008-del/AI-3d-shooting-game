@@ -107,6 +107,75 @@ export function createSceneView(config) {
 
   scene.add(cube)
 
+  const enemyRadius =
+    characterConfig.radius
+
+  const enemyCylinderHeight =
+    Math.max(
+      0,
+      characterConfig.standingHeight -
+        enemyRadius * 2
+    )
+
+  const enemyCapOffset =
+    enemyCylinderHeight / 2
+
+  const enemyCylinderGeometry =
+    new THREE.CylinderGeometry(
+      enemyRadius,
+      enemyRadius,
+      enemyCylinderHeight,
+      16
+    )
+
+  const enemyCapGeometry =
+    new THREE.SphereGeometry(
+      enemyRadius,
+      16,
+      10
+    )
+
+  const enemyMaterial =
+    new THREE.MeshStandardMaterial({
+      color:
+        config.testArena.enemyDummy.color,
+    })
+
+  const enemyDummy =
+    new THREE.Group()
+
+  const enemyCylinder =
+    new THREE.Mesh(
+      enemyCylinderGeometry,
+      enemyMaterial
+    )
+
+  const enemyTop =
+    new THREE.Mesh(
+      enemyCapGeometry,
+      enemyMaterial
+    )
+
+  const enemyBottom =
+    new THREE.Mesh(
+      enemyCapGeometry,
+      enemyMaterial
+    )
+
+  enemyTop.position.y =
+    enemyCapOffset
+
+  enemyBottom.position.y =
+    -enemyCapOffset
+
+  enemyDummy.add(
+    enemyCylinder,
+    enemyTop,
+    enemyBottom
+  )
+
+  scene.add(enemyDummy)
+
   const ambientLight =
     new THREE.AmbientLight(
       0xffffff,
@@ -138,6 +207,19 @@ export function createSceneView(config) {
 
     cube.rotation.y =
       state.cube.rotationY
+
+    if (state.enemyDummy) {
+      enemyDummy.visible =
+        state.enemyDummy.alive
+
+      enemyDummy.position.set(
+        state.enemyDummy.position.x,
+        state.enemyDummy.position.y,
+        state.enemyDummy.position.z
+      )
+    } else {
+      enemyDummy.visible = false
+    }
 
     const player =
       state.player.position
@@ -242,6 +324,9 @@ export function createSceneView(config) {
     groundMaterial.dispose()
     cubeGeometry.dispose()
     cubeMaterial.dispose()
+    enemyCylinderGeometry.dispose()
+    enemyCapGeometry.dispose()
+    enemyMaterial.dispose()
     renderer.dispose()
   }
 
