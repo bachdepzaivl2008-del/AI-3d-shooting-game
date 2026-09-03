@@ -110,6 +110,8 @@ export class DebugOverlay {
       `DASH LOCK: ${fixed(player.dashActivationLockRemaining, 2)} s`,
       `DASH EXIT: ${player.dashExitReason}`,
       `DASH ATTACK LOCK: ${player.dashAttackLocked}`,
+      `DASH ENEMY: ${player.dashEnemyContactId ?? 'none'}`,
+      `ENEMY SEP: ${player.enemySeparationContacts}`,
       `STAND BLOCKED: ${player.standBlocked}`,
       `LANDING: ${player.landingType}`,
       `LAND MULT: ${fixed(player.landingRecoveryMultiplier, 2)}`,
