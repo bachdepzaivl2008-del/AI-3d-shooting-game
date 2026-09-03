@@ -671,6 +671,7 @@ Implementation:
 - enemy dummy is registered as a living actor with a stable entity ID,
 - enemy dummy is NOT added as rigid Rapier world geometry,
 - ordinary locomotion uses deterministic post-movement horizontal capsule separation,
+- existing overlap also resolves while idle, covering latency/teleport-correction style overlap instead of requiring new movement input,
 - separation never changes Y position or transfers vertical velocity,
 - world-collision CharacterController still owns the final separated placement so separation cannot bypass solid geometry,
 - Dash uses a swept horizontal segment-vs-expanded-enemy-capsule test,
