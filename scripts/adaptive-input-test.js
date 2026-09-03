@@ -49,6 +49,28 @@ assert.equal(
   'Touch-capable laptop with precise pointer/hover should preserve desktop input'
 )
 
+assert.equal(
+  resolveInputMode({
+    maxTouchPoints: 0,
+    coarsePointer: false,
+    hoverNone: false,
+    forcedMode: 'touch',
+  }),
+  'touch',
+  'Debug override must allow touch controls to be tested on desktop'
+)
+
+assert.equal(
+  resolveInputMode({
+    maxTouchPoints: 10,
+    coarsePointer: true,
+    hoverNone: true,
+    forcedMode: 'desktop',
+  }),
+  'desktop',
+  'Debug override must allow desktop input mode to be forced'
+)
+
 const centered =
   normalizeTouchJoystick(
     0,
