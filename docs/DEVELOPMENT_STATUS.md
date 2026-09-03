@@ -439,3 +439,25 @@ Verification required:
 - npm run character:test
 - npm run build
 - browser: Sprint first, then press Ctrl while >=6.0 m/s; camera/capsule crouches and SLIDING becomes true; releasing Ctrl exits.
+
+
+## P2-MOVE-007 regression note — Landing test boundary
+Initial Slide verification:
+- slide:test PASS.
+- landing:test failed only at "Standard Landing must recover to full normal speed".
+
+Root cause:
+- not a Slide runtime regression,
+- movement for a fixed tick uses the Landing multiplier sampled at tick start,
+- recovery time advances at tick end,
+- therefore the tick that changes remaining recovery to 0 may still have velocity produced by the final sub-1.0 multiplier,
+- the first fully unpenalized velocity sample is the following fixed tick.
+
+Correction:
+- landing:test now checks full Normal speed on the first tick after recovery expires,
+- identical correction applied to Standard and Hard Landing assertions,
+- no gameplay value changed,
+- no epsilon/tolerance widened,
+- Landing runtime remains unchanged.
+
+P2-MOVE-007 remains AWAITING VERIFICATION until the complete regression is green.
