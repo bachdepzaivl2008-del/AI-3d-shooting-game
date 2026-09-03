@@ -388,7 +388,74 @@ assert.equal(
 
 main.authority.dispose()
 
-// 5) Air Dash: no vertical boost and gravity continues.
+
+// 5) Holding Dash must consume only one charge.
+// A new press edge is required for the second activation.
+const held =
+  await createAuthority(
+    'test:dash-held-edge'
+  )
+
+for (
+  let tick = 0;
+  tick < 40;
+  tick += 1
+) {
+  player =
+    await stepIntent(
+      held.authority,
+      held.sequencer,
+      {
+        dash: true,
+      }
+    )
+}
+
+assert.equal(
+  player.dashCharges,
+  1,
+  'Holding Dash must not automatically consume the second charge'
+)
+
+held.authority.dispose()
+
+// 6) Camera-relative direction at yaw +90 degrees.
+// Forward input must Dash along +X instead of world -Z.
+const directional =
+  await PlayerMovementSystem.create(
+    testConfig
+  )
+
+const directionalResult =
+  directional.update(
+    {
+      moveX: 0,
+      moveY: 1,
+      sprint: false,
+      crouch: false,
+      jump: false,
+      dash: true,
+    },
+    DT,
+    Math.PI / 2
+  )
+
+assert.ok(
+  directionalResult.correctedMovement.x >
+    0.4,
+  'Yaw +90° forward Dash must move camera-relative +X'
+)
+
+assert.ok(
+  Math.abs(
+    directionalResult.correctedMovement.z
+  ) < 0.05,
+  'Yaw +90° forward Dash must not remain locked to world -Z'
+)
+
+directional.dispose()
+
+// 7) Air Dash: no vertical boost and gravity continues.
 const air =
   await createAuthority(
     'test:dash-air'
@@ -445,7 +512,7 @@ assert.ok(
 
 air.authority.dispose()
 
-// 6) Swept world collision: blocked Dash stops and charge stays consumed.
+// 8) Swept world collision: blocked Dash stops and charge stays consumed.
 const blocked =
   await PlayerMovementSystem.create(
     testConfig
@@ -520,7 +587,7 @@ assert.ok(
 
 blocked.dispose()
 
-// 7) Dash overrides Slide.
+// 9) Dash overrides Slide.
 const slideDash =
   await createAuthority(
     'test:dash-slide-override'
@@ -588,7 +655,7 @@ assert.equal(
 slideDash.authority.dispose()
 
 
-// 8) Technical collision classification:
+// 10) Technical collision classification:
 // slope correction is not a solid-world block, but shortened path is.
 assert.equal(
   isDashTranslationBlocked(
@@ -637,6 +704,8 @@ console.log({
   independentTimerGap,
   independentRecharge:
     sawIndependentRecharge,
+  heldInputConsumesOneCharge: true,
+  cameraRelativeDirection: true,
   airDashGravityContinues: true,
   blockedConsumesCharge: true,
   slideOverride: true,
