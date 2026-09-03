@@ -153,6 +153,25 @@ canvas {
     );
 }
 
+.mobile-dash-button {
+  right:
+    max(
+      64px,
+      calc(
+        env(safe-area-inset-right) +
+        40px
+      )
+    );
+  bottom:
+    max(
+      118px,
+      calc(
+        env(safe-area-inset-bottom) +
+        94px
+      )
+    );
+}
+
 .mobile-orientation-hint {
   display: none;
   position: fixed;
@@ -188,6 +207,25 @@ canvas {
         98px,
         calc(
           env(safe-area-inset-right) +
+          76px
+        )
+      );
+  }
+
+  .mobile-dash-button {
+    right:
+      max(
+        56px,
+        calc(
+          env(safe-area-inset-right) +
+          34px
+        )
+      );
+    bottom:
+      max(
+        98px,
+        calc(
+          env(safe-area-inset-bottom) +
           76px
         )
       );
