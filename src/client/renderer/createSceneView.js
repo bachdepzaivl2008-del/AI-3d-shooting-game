@@ -1,6 +1,10 @@
 import * as THREE from 'three'
+import { detectClientProfile } from '../device/clientProfile.js'
 
 export function createSceneView(config) {
+  const clientProfile =
+    detectClientProfile()
+
   const scene = new THREE.Scene()
   scene.background = new THREE.Color(
     config.world.backgroundColor
@@ -25,10 +29,15 @@ export function createSceneView(config) {
     window.innerHeight
   )
 
+  const pixelRatioCap =
+    clientProfile.touchPrimary
+      ? config.client.mobilePixelRatioCap
+      : config.client.desktopPixelRatioCap
+
   renderer.setPixelRatio(
     Math.min(
       window.devicePixelRatio,
-      2
+      pixelRatioCap
     )
   )
 
