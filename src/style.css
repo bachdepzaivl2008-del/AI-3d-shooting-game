@@ -9,8 +9,187 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  overscroll-behavior: none;
+  background: #000;
+}
+
+body {
+  position: fixed;
+  inset: 0;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 canvas {
   display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.touch-controls-active,
+.touch-controls-active canvas {
+  touch-action: none;
+}
+
+.mobile-controls {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  touch-action: none;
+  font-family: system-ui, sans-serif;
+}
+
+.mobile-move-zone,
+.mobile-look-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.mobile-move-zone {
+  left: 0;
+  width: 45%;
+}
+
+.mobile-look-zone {
+  right: 0;
+  width: 55%;
+}
+
+.mobile-joystick-base {
+  position: fixed;
+  width: 108px;
+  height: 108px;
+  margin-left: -54px;
+  margin-top: -54px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.38);
+  background: rgba(0, 0, 0, 0.24);
+  opacity: 0;
+  transform: scale(0.86);
+  transition:
+    opacity 80ms linear,
+    transform 80ms linear;
+  pointer-events: none;
+}
+
+.mobile-joystick-base.is-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.mobile-joystick-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 52px;
+  height: 52px;
+  margin-left: -26px;
+  margin-top: -26px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.24);
+  will-change: transform;
+}
+
+.mobile-action-button {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.42);
+  background: rgba(0, 0, 0, 0.34);
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  pointer-events: auto;
+  touch-action: none;
+  transition:
+    transform 70ms linear,
+    background 70ms linear;
+}
+
+.mobile-action-button.is-active {
+  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.mobile-jump-button {
+  right:
+    max(
+      24px,
+      env(safe-area-inset-right)
+    );
+  bottom:
+    max(
+      24px,
+      env(safe-area-inset-bottom)
+    );
+}
+
+.mobile-crouch-button {
+  right:
+    max(
+      112px,
+      calc(
+        env(safe-area-inset-right) +
+        88px
+      )
+    );
+  bottom:
+    max(
+      42px,
+      calc(
+        env(safe-area-inset-bottom) +
+        18px
+      )
+    );
+}
+
+.mobile-orientation-hint {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: rgba(0, 0, 0, 0.92);
+  color: #fff;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  pointer-events: auto;
+}
+
+@media (orientation: portrait) and (pointer: coarse) {
+  .mobile-orientation-hint {
+    display: flex;
+  }
+}
+
+@media (max-height: 500px) {
+  .mobile-action-button {
+    width: 64px;
+    height: 64px;
+    font-size: 11px;
+  }
+
+  .mobile-crouch-button {
+    right:
+      max(
+        98px,
+        calc(
+          env(safe-area-inset-right) +
+          76px
+        )
+      );
+  }
 }
