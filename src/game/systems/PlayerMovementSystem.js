@@ -1430,7 +1430,48 @@ export class PlayerMovementSystem {
       !hasPlanarMovement &&
       !airborne
     ) {
-      this.collision.step()
+      const idleSeparation =
+        this.applyEnemySoftSeparation({
+          x: 0,
+          y: 0,
+          z: 0,
+          grounded:
+            this.lastGrounded,
+        })
+
+      this.enemySeparationContactsThisTick =
+        idleSeparation.contacts
+
+      let idlePosition
+      let idleCorrected
+
+      if (
+        idleSeparation.contacts > 0
+      ) {
+        idleCorrected =
+          idleSeparation.movement
+
+        idlePosition =
+          this.collision.applyCharacterMovement(
+            this.character,
+            idleCorrected
+          )
+
+        this.lastGrounded =
+          idleCorrected.grounded
+      } else {
+        this.collision.step()
+
+        idlePosition =
+          this.getPosition()
+
+        idleCorrected = {
+          x: 0,
+          y: 0,
+          z: 0,
+        }
+      }
+
       this.advanceLandingRecovery(
         deltaTime
       )
@@ -1445,7 +1486,8 @@ export class PlayerMovementSystem {
       )
 
       return this.createResult({
-        position: this.getPosition(),
+        position:
+          idlePosition,
         grounded:
           this.lastGrounded,
         sprinting: false,
@@ -1454,9 +1496,12 @@ export class PlayerMovementSystem {
         landedThisTick: false,
         verticalVelocity: 0,
         correctedMovement: {
-          x: 0,
-          y: 0,
-          z: 0,
+          x:
+            idleCorrected.x,
+          y:
+            idleCorrected.y,
+          z:
+            idleCorrected.z,
         },
         moveX,
         moveForward,
