@@ -154,6 +154,64 @@ assert.ok(
   'Soft separation must resolve to capsule-radius contact without deep overlap'
 )
 
+// Idle overlap recovery:
+// latency/teleport-style overlap must resolve even with no movement input.
+const overlapConfig = {
+  ...testConfig,
+  testArena: {
+    ...testConfig.testArena,
+    enemyDummy: {
+      ...testConfig.testArena.enemyDummy,
+      position: {
+        ...testConfig.player.spawnPosition,
+      },
+    },
+  },
+}
+
+const overlapAuthority =
+  await LocalAuthorityHost.create(
+    overlapConfig
+  )
+
+const overlapSequencer =
+  new IntentSequencer(
+    'test:enemy-idle-overlap'
+  )
+
+overlapAuthority.submitIntent(
+  createIntent(
+    overlapSequencer
+  )
+)
+
+overlapAuthority.step()
+
+const overlapState =
+  overlapAuthority.getState()
+
+const idleResolvedDistance =
+  Math.hypot(
+    overlapState.player.position.x -
+      overlapState.enemyDummy.position.x,
+    overlapState.player.position.z -
+      overlapState.enemyDummy.position.z
+  )
+
+assert.ok(
+  idleResolvedDistance >=
+    minimumEnemyDistance - 0.02,
+  'Existing enemy overlap must resolve even while the player gives no movement input'
+)
+
+assert.equal(
+  overlapState.player.velocity.y,
+  0,
+  'Idle overlap recovery must not transfer vertical velocity'
+)
+
+overlapAuthority.dispose()
+
 // Ordinary locomotion: enemy is NOT registered as rigid world geometry,
 // but post-movement horizontal separation must prevent deep overlap.
 const ordinary =
@@ -344,6 +402,8 @@ console.log({
   dashEnemyDistance,
   softSeparationObserved:
     sawSoftSeparation,
+  idleOverlapResolvedDistance:
+    idleResolvedDistance,
   dashExitReason:
     'enemy_blocked',
   chargeConsumedOnEnemyBlock: true,
