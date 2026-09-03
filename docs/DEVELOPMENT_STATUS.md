@@ -506,3 +506,9 @@ Verification required:
 - existing Stage 1 regression remains green,
 - desktop browser shows INPUT MODE: desktop and retains keyboard/mouse behavior,
 - touch-primary mobile/tablet shows INPUT MODE: touch, joystick/look/Jump/Crouch-Slide controls and landscape prompt.
+
+
+PLAT-001 verification convenience:
+- append `?input=touch` to the browser URL to force the mobile touch-control layer on desktop for testing,
+- append `?input=desktop` to force desktop input mode,
+- this override is client-side diagnostics only and does not change simulation behavior.
