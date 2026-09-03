@@ -233,6 +233,12 @@ export class Simulation {
     this.state.player.dashAttackLocked =
       movement.dashAttackLocked
 
+    this.state.player.dashEnemyContactId =
+      movement.dashEnemyContactId
+
+    this.state.player.enemySeparationContacts =
+      movement.enemySeparationContacts
+
     if (inputIntent) {
       this.state.player.lastInputSequence =
         inputIntent.sequence
