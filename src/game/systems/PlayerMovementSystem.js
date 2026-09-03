@@ -1,4 +1,5 @@
 import { RapierCollisionWorld } from '../../shared/collision/RapierCollisionWorld.js'
+import { DashController } from '../movement/DashController.js'
 
 function clampAxis(value) {
   if (!Number.isFinite(value)) return 0
@@ -6,6 +7,7 @@ function clampAxis(value) {
 }
 
 const DIRECTION_EPSILON = 1e-10
+const DASH_BLOCK_EPSILON = 1e-5
 
 function canonicalizeDirectionComponent(value) {
   return Math.abs(value) < DIRECTION_EPSILON
@@ -231,6 +233,14 @@ export class PlayerMovementSystem {
     this.slideElapsed = 0
     this.slideExitReason = 'none'
     this.slideSlopeAcceleration = 0
+
+    this.dashController =
+      new DashController(
+        config.movement
+      )
+
+    this.dashHeld = false
+    this.dashAttackLockedThisTick = false
   }
 
   beginAirborneTracking(y) {
@@ -633,6 +643,10 @@ export class PlayerMovementSystem {
       landingImpactSpeed:
         this.lastLandingImpactSpeed,
       ...this.getSlideState(),
+      ...this.dashController.getState(),
+      dashAttackLocked:
+        this.dashAttackLockedThisTick ||
+        this.dashController.active,
       input: {
         moveX,
         moveY: moveForward,
@@ -644,6 +658,8 @@ export class PlayerMovementSystem {
   update(input, deltaTime, yaw) {
     let landedThisTick = false
     let jumpedThisTick = false
+
+    this.dashAttackLockedThisTick = false
 
     const landingRecoveryMultiplier =
       this.getLandingRecoveryMultiplier()
@@ -676,6 +692,16 @@ export class PlayerMovementSystem {
 
     this.jumpHeld =
       jumpRequested
+
+    const dashRequested =
+      input?.dash === true
+
+    const dashPressed =
+      dashRequested &&
+      !this.dashHeld
+
+    this.dashHeld =
+      dashRequested
 
     if (
       this.sliding &&
@@ -712,14 +738,40 @@ export class PlayerMovementSystem {
       sprintRequested &&
       !stance.crouched &&
       this.lastGrounded &&
-      !this.sliding
+      !this.sliding &&
+      !this.dashController.active
+
+    if (dashPressed) {
+      const dashDirection =
+        hasPlanarMovement
+          ? direction
+          : cameraRelativeDirection(
+              0,
+              1,
+              yaw
+            )
+
+      const activation =
+        this.dashController.tryActivate(
+          dashDirection
+        )
+
+      if (activation.activated) {
+        if (this.sliding) {
+          this.stopSlide('dash')
+        }
+
+        sprinting = false
+      }
+    }
 
     // Existing Slide + Jump is an allowed transition.
     // The carried horizontal speed is capped at current Sprint speed.
     if (
       jumpPressed &&
       this.lastGrounded &&
-      this.sliding
+      this.sliding &&
+      !this.dashController.active
     ) {
       const canLaunch =
         this.tryStandForJump(
@@ -775,6 +827,7 @@ export class PlayerMovementSystem {
       jumpPressed &&
       this.lastGrounded &&
       !this.sliding &&
+      !this.dashController.active &&
       !jumpedThisTick
     ) {
       const canLaunch =
@@ -826,6 +879,7 @@ export class PlayerMovementSystem {
     if (
       !jumpedThisTick &&
       !this.sliding &&
+      !this.dashController.active &&
       crouchPressed &&
       crouchRequested &&
       this.lastGrounded
@@ -841,6 +895,178 @@ export class PlayerMovementSystem {
     const airborne =
       !this.lastGrounded ||
       jumpedThisTick
+
+    if (this.dashController.active) {
+      this.dashAttackLockedThisTick = true
+
+      const dashStep =
+        this.dashController.getMovementStep(
+          deltaTime
+        )
+
+      const wasAirborne =
+        !this.lastGrounded
+
+      const desiredMovement = {
+        x: dashStep.x,
+        y:
+          wasAirborne
+            ? (
+                this.verticalVelocity -
+                0.5 *
+                  this.config.movement
+                    .gravity *
+                  deltaTime
+              ) *
+              deltaTime
+            : 0,
+        z: dashStep.z,
+      }
+
+      const corrected =
+        this.collision.computeCharacterMovement(
+          this.character,
+          desiredMovement
+        )
+
+      const position =
+        this.collision.applyCharacterMovement(
+          this.character,
+          corrected
+        )
+
+      const correctedPlanarVelocity = {
+        x:
+          corrected.x /
+          deltaTime,
+        z:
+          corrected.z /
+          deltaTime,
+      }
+
+      this.setLastPlanarVelocity(
+        correctedPlanarVelocity.x,
+        correctedPlanarVelocity.z
+      )
+
+      const actualPlanarDistance =
+        Math.hypot(
+          corrected.x,
+          corrected.z
+        )
+
+      const blocked =
+        actualPlanarDistance +
+          DASH_BLOCK_EPSILON <
+        dashStep.requestedDistance
+
+      if (wasAirborne) {
+        this.updateAirborneTracking(
+          position.y
+        )
+
+        const landed =
+          corrected.grounded &&
+          this.verticalVelocity <= 0
+
+        if (landed) {
+          const characterConfig =
+            this.config.collision.character
+
+          const realAirborneLanding =
+            this.getAirborneVerticalRange() >
+            characterConfig.stepHeight +
+              characterConfig.controllerOffset
+
+          landedThisTick =
+            realAirborneLanding
+
+          const impactSpeed =
+            Math.max(
+              0,
+              -(
+                this.verticalVelocity -
+                this.config.movement.gravity *
+                  deltaTime
+              )
+            )
+
+          if (realAirborneLanding) {
+            this.triggerLandingRecovery(
+              impactSpeed
+            )
+          }
+
+          this.resetAirborneTracking()
+          this.lastGrounded = true
+          this.verticalVelocity = 0
+        } else {
+          this.lastGrounded = false
+
+          this.verticalVelocity -=
+            this.config.movement.gravity *
+            deltaTime
+        }
+      } else {
+        this.lastGrounded =
+          corrected.grounded
+
+        if (!corrected.grounded) {
+          this.beginAirborneTracking(
+            position.y
+          )
+
+          this.verticalVelocity = 0
+        }
+      }
+
+      this.airVelocity = {
+        ...correctedPlanarVelocity,
+      }
+
+      this.airborneSpeedCap =
+        Math.hypot(
+          this.airVelocity.x,
+          this.airVelocity.z
+        )
+
+      this.dashController.finishMovementStep({
+        stepTime:
+          dashStep.stepTime,
+        requestedDistance:
+          dashStep.requestedDistance,
+        blocked,
+      })
+
+      if (!landedThisTick) {
+        this.advanceLandingRecovery(
+          deltaTime
+        )
+      }
+
+      this.dashController.advanceTimers(
+        deltaTime
+      )
+
+      return this.createResult({
+        position,
+        grounded:
+          this.lastGrounded,
+        sprinting: false,
+        stance,
+        jumpedThisTick: false,
+        landedThisTick,
+        verticalVelocity:
+          this.verticalVelocity,
+        correctedMovement: {
+          x: corrected.x,
+          y: corrected.y,
+          z: corrected.z,
+        },
+        moveX,
+        moveForward,
+      })
+    }
 
     if (this.sliding) {
       const desiredMovement = {
@@ -962,6 +1188,10 @@ export class PlayerMovementSystem {
         deltaTime
       )
 
+      this.dashController.advanceTimers(
+        deltaTime
+      )
+
       return this.createResult({
         position,
         grounded:
@@ -994,6 +1224,10 @@ export class PlayerMovementSystem {
       this.setLastPlanarVelocity(
         0,
         0
+      )
+
+      this.dashController.advanceTimers(
+        deltaTime
       )
 
       return this.createResult({
@@ -1182,6 +1416,10 @@ export class PlayerMovementSystem {
         deltaTime
       )
     }
+
+    this.dashController.advanceTimers(
+      deltaTime
+    )
 
     return this.createResult({
       position,
