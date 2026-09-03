@@ -82,6 +82,24 @@ function clampPlanarMagnitude(
   }
 }
 
+export function isDashTranslationBlocked(
+  correctedMovement,
+  requestedDistance
+) {
+  const actualPathDistance =
+    Math.hypot(
+      correctedMovement.x,
+      correctedMovement.y,
+      correctedMovement.z
+    )
+
+  return (
+    actualPathDistance +
+      DASH_BLOCK_EPSILON <
+    requestedDistance
+  )
+}
+
 export function computeSlideSlopeAcceleration(
   correctedMovement,
   gravity
@@ -949,16 +967,11 @@ export class PlayerMovementSystem {
         correctedPlanarVelocity.z
       )
 
-      const actualPlanarDistance =
-        Math.hypot(
-          corrected.x,
-          corrected.z
-        )
-
       const blocked =
-        actualPlanarDistance +
-          DASH_BLOCK_EPSILON <
-        dashStep.requestedDistance
+        isDashTranslationBlocked(
+          corrected,
+          dashStep.requestedDistance
+        )
 
       if (wasAirborne) {
         this.updateAirborneTracking(
