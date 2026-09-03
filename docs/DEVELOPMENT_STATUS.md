@@ -461,3 +461,48 @@ Correction:
 - Landing runtime remains unchanged.
 
 P2-MOVE-007 remains AWAITING VERIFICATION until the complete regression is green.
+
+
+## PLAT-001 — Adaptive desktop/mobile input foundation
+**IMPLEMENTED / AWAITING VERIFICATION**
+
+Release-direction update requested:
+- one shared browser build/link should support desktop and touch-primary mobile/tablet,
+- gameplay simulation remains shared and authoritative-friendly,
+- only the local input/presentation layer adapts per device.
+
+Implemented:
+- adaptive input-mode detection:
+  - desktop precision-pointer/hover profile -> BrowserInputSource,
+  - touch-primary coarse/no-hover profile -> TouchInputSource,
+  - touch-capable laptops with a normal precision pointer remain desktop mode,
+- mobile floating left joystick -> canonical moveX/moveY PLAYER_INPUT fields,
+- mobile right-side drag look -> canonical lookDeltaX/lookDeltaY fields,
+- mobile Jump hold button,
+- mobile Crouch/Slide hold button,
+- Auto-Sprint when joystick magnitude >= 0.88,
+- partial joystick deflection remains walk/non-Sprint,
+- landscape-orientation blocker for touch-primary portrait use,
+- touch-safe viewport / overscroll / context-menu prevention,
+- mobile renderer pixel-ratio cap = 1.5 versus desktop cap = 2.0,
+- debug overlay now exposes INPUT MODE,
+- adaptive-input:test covers device-mode selection, joystick normalization and Auto-Sprint threshold.
+
+Implementation-owned mobile UX values:
+- joystick radius = 54 CSS px,
+- Auto-Sprint threshold = 0.88,
+- touch look scale = 1.6,
+- mobile renderer pixel-ratio cap = 1.5.
+
+Scope boundary:
+- this makes the CURRENT movement sandbox playable from touch without duplicating gameplay logic,
+- Dash / Fire / ADS / Reload / Weapon Switch touch buttons are intentionally not fabricated before those gameplay actions exist,
+- those controls will extend TouchInputSource when the corresponding canonical gameplay systems are implemented,
+- aim assist / input-based matchmaking remain later competitive-playtest decisions, not part of PLAT-001.
+
+Verification required:
+- npm run adaptive-input:test
+- npm run build
+- existing Stage 1 regression remains green,
+- desktop browser shows INPUT MODE: desktop and retains keyboard/mouse behavior,
+- touch-primary mobile/tablet shows INPUT MODE: touch, joystick/look/Jump/Crouch-Slide controls and landscape prompt.
