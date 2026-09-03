@@ -1,6 +1,6 @@
 import { LocalAuthorityHost } from './LocalAuthorityHost.js'
 import { createSceneView } from '../../client/renderer/createSceneView.js'
-import { BrowserInputSource } from '../../client/input/BrowserInputSource.js'
+import { createAdaptiveInputSource } from '../../client/input/createAdaptiveInputSource.js'
 import { DebugOverlay } from '../../client/debug/DebugOverlay.js'
 
 export class Game {
@@ -18,13 +18,23 @@ export class Game {
     this.sceneView =
       createSceneView(config)
 
-    this.inputSource =
-      new BrowserInputSource(
-        this.sceneView.inputElement
+    const {
+      inputSource,
+      profile,
+    } =
+      createAdaptiveInputSource(
+        this.sceneView.inputElement,
+        config
       )
 
+    this.inputSource =
+      inputSource
+
+    this.clientProfile =
+      profile
+
     this.debugOverlay =
-      new DebugOverlay()
+      new DebugOverlay(profile)
 
     this.lastFrameTime = 0
     this.accumulator = 0
