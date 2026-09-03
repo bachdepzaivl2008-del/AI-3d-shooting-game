@@ -77,6 +77,19 @@ export const gameConfig = {
     maxPitchDegrees: 89,
   },
 
+  input: {
+    // Client-only mobile UX values. These do not alter
+    // authoritative locomotion rules.
+    mobileJoystickRadiusPx: 54,
+    mobileAutoSprintThreshold: 0.88,
+    mobileLookScale: 1.6,
+  },
+
+  client: {
+    desktopPixelRatioCap: 2,
+    mobilePixelRatioCap: 1.5,
+  },
+
   player: {
     spawnPosition: {
       x: 0,
