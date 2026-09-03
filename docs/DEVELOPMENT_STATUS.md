@@ -52,7 +52,7 @@ Final verification confirmed:
 - Collision foundation regression: PASS
 
 ## Current task
-**P2-MOVE-007 — Slide (IMPLEMENTED / AWAITING VERIFICATION)**
+**P2-MOVE-008 — 2 Dash Charges + Independent Recharge (IMPLEMENTED / AWAITING VERIFICATION)**
 
 Rule: a FAIL blocks the next dependent implementation unless explicitly registered as non-blocking PASS WITH ISSUES.
 
@@ -532,3 +532,99 @@ Cross-device release foundation is now established:
 
 Return to canonical Stage 1 movement work:
 **P2-MOVE-007 — Slide remains the current gameplay task until final browser acceptance is recorded.**
+
+
+## P2-MOVE-007 closure
+**PASS / CLOSED ✅**
+
+Progression note:
+- Slide regression is green after the Landing fixed-tick boundary correction.
+- User authorized progression to the next Stage 1 movement slice.
+- No remaining Slide browser defect was reported at handoff.
+
+## P2-MOVE-008 — 2 Dash Charges + Independent Recharge
+**IMPLEMENTED / AWAITING VERIFICATION**
+
+Canonical Core Gameplay 68B values:
+- Dash Charges = 2 — LOCKED,
+- Dash Distance = 7.0 m,
+- Dash Duration = 0.22 s,
+- per-charge recharge = 4.5 s,
+- each consumed charge owns an independent timer,
+- minimum activation interval = 0.25 s,
+- grounded and airborne Dash are legal,
+- Dash is horizontal only,
+- camera-relative movement input selects direction; no-input defaults camera-forward,
+- gravity continues during Air Dash,
+- Dash does not reset Jump/Fall state,
+- Dash overrides Slide,
+- swept world collision stops before solid geometry while still consuming the charge,
+- no bounce and no wall-impact damage,
+- attacks are locked during Dash; weapon-specific post-Dash recovery remains Weapon System-owned.
+
+Implementation:
+- authoritative DashController owns two independent recharge timers,
+- exact-distance fixed-tick integration uses a partial final Dash step so 0.22 s does not overshoot 7.0 m at 60 Hz,
+- input edge prevents one held button from consuming both charges,
+- 0.25 s activation lock is authoritative,
+- Dash direction is captured on activation and remains fixed through that Dash; this is an implementation-owned interpretation because the GDD does not specify mid-Dash steering,
+- no-input Dash defaults camera-forward,
+- Ground Dash preserves grounded contact,
+- Air Dash preserves current vertical state and continues gravity,
+- leaving a ledge during Ground Dash transitions into the existing airborne/fall state,
+- airborne Dash landing still participates in Landing Slowdown because Dash does not reset fall state,
+- Slide is cancelled with slideExitReason = dash when Dash activates,
+- world blocking uses the shared swept Rapier CharacterController,
+- blocked-path detection compares actual corrected 3D path length against requested Dash translation so walkable slope correction is not mistaken for a wall,
+- a blocked Dash ends immediately and the consumed charge continues recharging,
+- dashAttackLocked remains true for every tick that actually performs Dash movement, including the final partial Dash tick,
+- desktop implementation-owned binding = E,
+- mobile TouchInputSource now exposes a DASH button,
+- debug telemetry exposes DASHING / CHARGES / independent timers / remaining distance-time / activation lock / exit reason / attack lock,
+- dash:test covers:
+  - exactly two spawn charges,
+  - default-forward direction,
+  - exact 7.0 m unblocked distance,
+  - 0.22 s duration integration,
+  - 0.25 s minimum activation interval,
+  - independent 4.5 s timers,
+  - no third Dash with zero charges,
+  - staggered independent recharge,
+  - Air Dash gravity/no vertical boost,
+  - swept world blocking + consumed charge,
+  - Slide override,
+  - slope correction versus wall blocking classification.
+
+Cross-device update:
+- PLAT-001 remains CLOSED,
+- Dash is the first post-PLAT gameplay action added to both desktop and mobile adaptive input layers,
+- future Fire / ADS / Reload / Weapon Switch controls will follow the same pattern.
+
+Verification required:
+- npm run dash:test
+- npm run slide:test
+- npm run landing:test
+- npm run jump:test
+- npm run crouch:test
+- npm run sprint:test
+- npm run velocity:test
+- npm run movement:test
+- npm run look:test
+- npm run adaptive-input:test
+- npm run foundation:test
+- npm run collision:test
+- npm run character:test
+- npm run build
+
+Browser verification:
+- desktop: E performs Dash,
+- touch mode: DASH button performs Dash,
+- no directional input => camera-forward Dash,
+- WASD/joystick direction + Dash => camera-relative directional Dash,
+- two rapid legal activations consume 2 -> 1 -> 0 charges,
+- holding E/DASH must not consume both charges,
+- second activation cannot occur before 0.25 s,
+- each consumed charge visibly recharges independently,
+- Jump then Dash preserves vertical motion while gravity continues,
+- Sprint -> Slide -> Dash cancels Slide,
+- Dash into the red cube/wall stops before geometry but still consumes a charge.
