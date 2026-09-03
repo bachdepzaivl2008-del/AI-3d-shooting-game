@@ -52,7 +52,7 @@ Final verification confirmed:
 - Collision foundation regression: PASS
 
 ## Current task
-**P2-MOVE-008 — 2 Dash Charges + Independent Recharge (IMPLEMENTED / AWAITING VERIFICATION)**
+**P2-MOVE-009 — Enemy Dummy + Soft Separation + Dash Non-Phase-Through (IMPLEMENTED / AWAITING VERIFICATION)**
 
 Rule: a FAIL blocks the next dependent implementation unless explicitly registered as non-blocking PASS WITH ISSUES.
 
@@ -630,3 +630,91 @@ Browser verification:
 - Jump then Dash preserves vertical motion while gravity continues,
 - Sprint -> Slide -> Dash cancels Slide,
 - Dash into the red cube/wall stops before geometry but still consumes a charge.
+
+
+## P2-MOVE-008 closure
+**PASS / CLOSED ✅**
+
+User verification confirms:
+- grounded Dash works very well,
+- Air Dash works very well,
+- 2 independent recharge timers behave correctly,
+- world blocking consumes the charge and stops movement,
+- Slide override works,
+- desktop E and mobile DASH controls both work,
+- full browser/regression acceptance is green.
+
+Air Dash semantics and Dash world collision were implemented and verified inside P2-MOVE-008, so the next dependency pair is Enemy Dummy + Dash Enemy Body Contact.
+
+## P2-MOVE-009 — Enemy Dummy + Soft Separation + Dash Non-Phase-Through
+**IMPLEMENTED / AWAITING VERIFICATION**
+
+Canonical Core Gameplay 68C:
+- Human players and Bots use the same physical envelope.
+- Enemy Body Interaction = soft separation ON.
+- Enemy actors must not remain deeply overlapped.
+- Separation resolves horizontal capsule overlap only.
+- No rigid-body impulse, launch or vertical-velocity transfer.
+- Living enemy capsules are not rigid world walls during ordinary locomotion.
+- Dash may not phase through a living enemy capsule.
+- Dash stops on first enemy-capsule contact before deep overlap.
+- Dash charge remains consumed.
+- Dash contact causes no damage, knockback, bounce or vertical launch.
+- Teammate Dash pass-through remains allowed; teammate non-blocking is the next separate Stage 1 test.
+
+Implementation:
+- added one visible Stage 1 enemy dummy using the canonical standing capsule:
+  - total height 1.80 m,
+  - radius 0.35 m,
+  - Red team,
+  - default arena position x=8, y=0.91, z=5,
+- enemy dummy is registered as a living actor with a stable entity ID,
+- enemy dummy is NOT added as rigid Rapier world geometry,
+- ordinary locomotion uses deterministic post-movement horizontal capsule separation,
+- separation never changes Y position or transfers vertical velocity,
+- world-collision CharacterController still owns the final separated placement so separation cannot bypass solid geometry,
+- Dash uses a swept horizontal segment-vs-expanded-enemy-capsule test,
+- vertical body-band overlap is checked at contact time so an Air Dash above the enemy is not blocked,
+- earliest living-enemy contact shortens the Dash movement before overlap,
+- enemy-contact Dash ends with dashExitReason = enemy_blocked,
+- consumed Dash charge continues its independent recharge,
+- no damage/knockback/bounce behavior is introduced,
+- debug telemetry exposes:
+  - DASH ENEMY,
+  - ENEMY SEP,
+- enemy-body:test covers:
+  - pure horizontal overlap resolution,
+  - ordinary movement soft separation,
+  - no vertical transfer,
+  - Dash charge consumed on enemy block,
+  - Dash stops before deep overlap,
+  - no phase-through to the far side,
+  - vertical non-overlap allows Air Dash above the enemy.
+
+Verification required:
+- npm run enemy-body:test
+- npm run dash:test
+- npm run slide:test
+- npm run landing:test
+- npm run jump:test
+- npm run crouch:test
+- npm run sprint:test
+- npm run velocity:test
+- npm run movement:test
+- npm run look:test
+- npm run adaptive-input:test
+- npm run foundation:test
+- npm run collision:test
+- npm run character:test
+- npm run build
+
+Browser verification:
+- a red capsule enemy dummy is visible near x=8, z=5,
+- ordinary movement into the dummy should prevent deep overlap without launch/bounce,
+- ENEMY SEP should become non-zero on contact,
+- approach the dummy, then Dash through it:
+  - Dash must stop at the near side,
+  - DASH EXIT = enemy_blocked,
+  - DASH ENEMY shows the dummy entity ID,
+  - one Dash charge is consumed,
+  - no vertical launch or bounce occurs.
