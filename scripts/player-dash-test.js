@@ -510,6 +510,42 @@ assert.ok(
   'Early ascending Air Dash must preserve the existing jump/fall state rather than resetting it'
 )
 
+while (
+  air.authority.getState()
+    .player.dashing
+) {
+  player =
+    await stepIntent(
+      air.authority,
+      air.sequencer,
+      {
+        jump: false,
+        dash: false,
+      }
+    )
+}
+
+player =
+  await stepIntent(
+    air.authority,
+    air.sequencer,
+    {
+      jump: false,
+      dash: false,
+    }
+  )
+
+const postAirDashPlanarSpeed =
+  Math.hypot(
+    player.velocity.x,
+    player.velocity.z
+  )
+
+assert.ok(
+  postAirDashPlanarSpeed <= 0.05,
+  'Stationary Jump + Air Dash must not leak Dash burst speed into permanent post-Dash air momentum'
+)
+
 air.authority.dispose()
 
 // 8) Swept world collision: blocked Dash stops and charge stays consumed.
@@ -707,6 +743,7 @@ console.log({
   heldInputConsumesOneCharge: true,
   cameraRelativeDirection: true,
   airDashGravityContinues: true,
+  postAirDashBurstLeakBlocked: true,
   blockedConsumesCharge: true,
   slideOverride: true,
   slopeTraversalNotBlocked: true,
