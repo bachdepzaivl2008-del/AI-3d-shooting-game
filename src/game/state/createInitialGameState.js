@@ -13,6 +13,24 @@ export function createInitialGameState(config, runtime) {
       rotationY: 0,
     },
 
+    enemyDummy: runtime.enemyDummy
+      ? {
+          id:
+            runtime.enemyDummy.id,
+          team:
+            runtime.enemyDummy.team,
+          alive:
+            runtime.enemyDummy.alive,
+          position: {
+            ...runtime.enemyDummy.position,
+          },
+          totalHeight:
+            runtime.enemyDummy.totalHeight,
+          radius:
+            runtime.enemyDummy.radius,
+        }
+      : null,
+
     player: {
       id: runtime.playerId,
       position: {
@@ -59,6 +77,8 @@ export function createInitialGameState(config, runtime) {
       dashActivationLockRemaining: 0,
       dashExitReason: 'none',
       dashAttackLocked: false,
+      dashEnemyContactId: null,
+      enemySeparationContacts: 0,
       lastInputSequence: 0,
     },
   }
