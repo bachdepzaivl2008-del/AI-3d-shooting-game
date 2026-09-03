@@ -13,7 +13,9 @@ function cleanVelocityComponent(value) {
 }
 
 export class DebugOverlay {
-  constructor() {
+  constructor(clientProfile = null) {
+    this.clientProfile =
+      clientProfile
     this.element = document.createElement('pre')
     Object.assign(this.element.style, {
       position: 'fixed',
@@ -80,6 +82,7 @@ export class DebugOverlay {
 
     this.element.textContent = [
       `FPS: ${fixed(this.smoothedFps, 0)}`,
+      `INPUT MODE: ${this.clientProfile?.inputMode ?? 'unknown'}`,
       `SIM TICK: ${state.tick}`,
       `POS: ${fixed(p.x)}  ${fixed(p.y)}  ${fixed(p.z)}`,
       `VEL XYZ: ${fixed(velocity.x)}  ${fixed(velocity.y)}  ${fixed(velocity.z)}`,
