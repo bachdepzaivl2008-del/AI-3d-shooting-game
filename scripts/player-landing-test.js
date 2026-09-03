@@ -285,13 +285,34 @@ assert.equal(
   'Landing type must clear when recovery completes'
 )
 
+// Recovery state advances at the end of a fixed tick, while that
+// tick's movement used the multiplier sampled at its beginning.
+// Therefore the first fully unpenalized movement sample is the
+// following tick. This is a fixed-step boundary semantic, not
+// additional recovery duration.
+standard.authority.submitIntent(
+  createIntent(
+    standard.sequencer,
+    {
+      moveY: 1,
+    }
+  )
+)
+
+standard.authority.step()
+
+standardPlayer =
+  standard.authority
+    .getState()
+    .player
+
 assert.ok(
   nearlyEqual(
     planarSpeed(standardPlayer),
     flatConfig.movement.baseSpeed,
     0.05
   ),
-  'Standard Landing must recover to full normal speed'
+  'Standard Landing must use full normal speed on the first tick after recovery expires'
 )
 
 standard.authority.dispose()
@@ -435,13 +456,29 @@ assert.equal(
   'Hard Landing recovery must complete'
 )
 
+hard.authority.submitIntent(
+  createIntent(
+    hard.sequencer,
+    {
+      moveX: 1,
+    }
+  )
+)
+
+hard.authority.step()
+
+hardPlayer =
+  hard.authority
+    .getState()
+    .player
+
 assert.ok(
   nearlyEqual(
     planarSpeed(hardPlayer),
     hardConfig.movement.baseSpeed,
     0.05
   ),
-  'Hard Landing must recover to full normal speed'
+  'Hard Landing must use full normal speed on the first tick after recovery expires'
 )
 
 hard.authority.dispose()
