@@ -24,7 +24,8 @@
     "landing:test": "node scripts/player-landing-test.js",
     "slide:test": "node scripts/player-slide-test.js",
     "adaptive-input:test": "node scripts/adaptive-input-test.js",
-    "dash:test": "node scripts/player-dash-test.js"
+    "dash:test": "node scripts/player-dash-test.js",
+    "enemy-body:test": "node scripts/player-enemy-body-test.js"
   },
   "devDependencies": {
     "vite": "^8.2.0"
