@@ -80,6 +80,16 @@ export class DebugOverlay {
 
     const orientation = player.orientation
 
+    const dashLivingContactId =
+      player.dashLivingContactId ??
+      player.dashEnemyContactId ??
+      null
+
+    const livingBodySeparationContacts =
+      player.livingBodySeparationContacts ??
+      player.enemySeparationContacts ??
+      0
+
     this.element.textContent = [
       `FPS: ${fixed(this.smoothedFps, 0)}`,
       `INPUT MODE: ${this.clientProfile?.inputMode ?? 'unknown'}`,
@@ -110,8 +120,8 @@ export class DebugOverlay {
       `DASH LOCK: ${fixed(player.dashActivationLockRemaining, 2)} s`,
       `DASH EXIT: ${player.dashExitReason}`,
       `DASH ATTACK LOCK: ${player.dashAttackLocked}`,
-      `DASH ENEMY: ${player.dashEnemyContactId ?? 'none'}`,
-      `ENEMY SEP: ${player.enemySeparationContacts}`,
+      `DASH BODY: ${dashLivingContactId ?? 'none'}`,
+      `BODY SEP: ${livingBodySeparationContacts}`,
       `STAND BLOCKED: ${player.standBlocked}`,
       `LANDING: ${player.landingType}`,
       `LAND MULT: ${fixed(player.landingRecoveryMultiplier, 2)}`,
