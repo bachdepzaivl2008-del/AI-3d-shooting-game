@@ -107,74 +107,110 @@ export function createSceneView(config) {
 
   scene.add(cube)
 
-  const enemyRadius =
+  const bodyRadius =
     characterConfig.radius
 
-  const enemyCylinderHeight =
+  const bodyCylinderHeight =
     Math.max(
       0,
       characterConfig.standingHeight -
-        enemyRadius * 2
+        bodyRadius * 2
     )
 
-  const enemyCapOffset =
-    enemyCylinderHeight / 2
+  const bodyCapOffset =
+    bodyCylinderHeight / 2
 
-  const enemyCylinderGeometry =
+  const bodyCylinderGeometry =
     new THREE.CylinderGeometry(
-      enemyRadius,
-      enemyRadius,
-      enemyCylinderHeight,
+      bodyRadius,
+      bodyRadius,
+      bodyCylinderHeight,
       16
     )
 
-  const enemyCapGeometry =
+  const bodyCapGeometry =
     new THREE.SphereGeometry(
-      enemyRadius,
+      bodyRadius,
       16,
       10
     )
 
-  const enemyMaterial =
-    new THREE.MeshStandardMaterial({
-      color:
-        config.testArena.enemyDummy.color,
-    })
+  const livingBodyMaterials = []
+
+  function createLivingBodyView(color) {
+    const material =
+      new THREE.MeshStandardMaterial({
+        color,
+      })
+
+    livingBodyMaterials.push(material)
+
+    const group =
+      new THREE.Group()
+
+    const cylinder =
+      new THREE.Mesh(
+        bodyCylinderGeometry,
+        material
+      )
+
+    const top =
+      new THREE.Mesh(
+        bodyCapGeometry,
+        material
+      )
+
+    const bottom =
+      new THREE.Mesh(
+        bodyCapGeometry,
+        material
+      )
+
+    top.position.y =
+      bodyCapOffset
+
+    bottom.position.y =
+      -bodyCapOffset
+
+    group.add(
+      cylinder,
+      top,
+      bottom
+    )
+
+    scene.add(group)
+
+    return group
+  }
 
   const enemyDummy =
-    new THREE.Group()
-
-  const enemyCylinder =
-    new THREE.Mesh(
-      enemyCylinderGeometry,
-      enemyMaterial
+    createLivingBodyView(
+      config.testArena.enemyDummy.color
     )
 
-  const enemyTop =
-    new THREE.Mesh(
-      enemyCapGeometry,
-      enemyMaterial
+  const friendlyBotDummy =
+    createLivingBodyView(
+      config.testArena.friendlyBotDummy.color
     )
 
-  const enemyBottom =
-    new THREE.Mesh(
-      enemyCapGeometry,
-      enemyMaterial
+  function syncLivingBodyView(
+    view,
+    actor
+  ) {
+    if (!actor) {
+      view.visible = false
+      return
+    }
+
+    view.visible =
+      actor.alive
+
+    view.position.set(
+      actor.position.x,
+      actor.position.y,
+      actor.position.z
     )
-
-  enemyTop.position.y =
-    enemyCapOffset
-
-  enemyBottom.position.y =
-    -enemyCapOffset
-
-  enemyDummy.add(
-    enemyCylinder,
-    enemyTop,
-    enemyBottom
-  )
-
-  scene.add(enemyDummy)
+  }
 
   const ambientLight =
     new THREE.AmbientLight(
@@ -208,18 +244,15 @@ export function createSceneView(config) {
     cube.rotation.y =
       state.cube.rotationY
 
-    if (state.enemyDummy) {
-      enemyDummy.visible =
-        state.enemyDummy.alive
+    syncLivingBodyView(
+      enemyDummy,
+      state.enemyDummy
+    )
 
-      enemyDummy.position.set(
-        state.enemyDummy.position.x,
-        state.enemyDummy.position.y,
-        state.enemyDummy.position.z
-      )
-    } else {
-      enemyDummy.visible = false
-    }
+    syncLivingBodyView(
+      friendlyBotDummy,
+      state.friendlyBotDummy
+    )
 
     const player =
       state.player.position
@@ -324,9 +357,16 @@ export function createSceneView(config) {
     groundMaterial.dispose()
     cubeGeometry.dispose()
     cubeMaterial.dispose()
-    enemyCylinderGeometry.dispose()
-    enemyCapGeometry.dispose()
-    enemyMaterial.dispose()
+    bodyCylinderGeometry.dispose()
+    bodyCapGeometry.dispose()
+
+    for (
+      const material of
+      livingBodyMaterials
+    ) {
+      material.dispose()
+    }
+
     renderer.dispose()
   }
 
