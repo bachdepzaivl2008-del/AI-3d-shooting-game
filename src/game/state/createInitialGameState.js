@@ -1,3 +1,22 @@
+function copyLivingDummy(dummy) {
+  if (!dummy) return null
+
+  return {
+    id: dummy.id,
+    team: dummy.team,
+    controllerType:
+      dummy.controllerType ?? null,
+    alive: dummy.alive,
+    position: {
+      ...dummy.position,
+    },
+    totalHeight:
+      dummy.totalHeight,
+    radius:
+      dummy.radius,
+  }
+}
+
 export function createInitialGameState(config, runtime) {
   return {
     tick: 0,
@@ -13,23 +32,15 @@ export function createInitialGameState(config, runtime) {
       rotationY: 0,
     },
 
-    enemyDummy: runtime.enemyDummy
-      ? {
-          id:
-            runtime.enemyDummy.id,
-          team:
-            runtime.enemyDummy.team,
-          alive:
-            runtime.enemyDummy.alive,
-          position: {
-            ...runtime.enemyDummy.position,
-          },
-          totalHeight:
-            runtime.enemyDummy.totalHeight,
-          radius:
-            runtime.enemyDummy.radius,
-        }
-      : null,
+    enemyDummy:
+      copyLivingDummy(
+        runtime.enemyDummy
+      ),
+
+    friendlyBotDummy:
+      copyLivingDummy(
+        runtime.friendlyBotDummy
+      ),
 
     player: {
       id: runtime.playerId,
@@ -77,8 +88,12 @@ export function createInitialGameState(config, runtime) {
       dashActivationLockRemaining: 0,
       dashExitReason: 'none',
       dashAttackLocked: false,
+      // P2-MOVE-009 compatibility names.
       dashEnemyContactId: null,
       enemySeparationContacts: 0,
+      // Canonical P2-MOVE-010 generic names.
+      dashLivingContactId: null,
+      livingBodySeparationContacts: 0,
       lastInputSequence: 0,
     },
   }
