@@ -21,12 +21,25 @@ export function verticalCapsuleBandsOverlap({
   )
 }
 
-export function resolveEnemySoftSeparation({
+function isBlockingLivingActor(
+  actor,
+  selfActorId = null
+) {
+  return (
+    actor?.alive === true &&
+    (
+      selfActorId === null ||
+      actor.id !== selfActorId
+    )
+  )
+}
+
+export function resolveLivingBodySoftSeparation({
   proposedPosition,
   playerRadius,
   playerTotalHeight,
   actors,
-  playerTeam = 'blue',
+  selfActorId = null,
   fallbackDirection = {
     x: 1,
     z: 0,
@@ -42,8 +55,10 @@ export function resolveEnemySoftSeparation({
 
   for (const actor of actors) {
     if (
-      !actor?.alive ||
-      actor.team === playerTeam
+      !isBlockingLivingActor(
+        actor,
+        selfActorId
+      )
     ) {
       continue
     }
@@ -216,20 +231,22 @@ function segmentCircleFirstHit({
   return t
 }
 
-export function sweepDashAgainstEnemies({
+export function sweepDashAgainstLivingActors({
   startPosition,
   desiredMovement,
   playerRadius,
   playerTotalHeight,
   actors,
-  playerTeam = 'blue',
+  selfActorId = null,
 }) {
   let earliest = null
 
   for (const actor of actors) {
     if (
-      !actor?.alive ||
-      actor.team === playerTeam
+      !isBlockingLivingActor(
+        actor,
+        selfActorId
+      )
     ) {
       continue
     }
@@ -284,6 +301,10 @@ export function sweepDashAgainstEnemies({
       earliest = {
         t: hitT,
         actorId: actor.id,
+        actorTeam:
+          actor.team ?? null,
+        controllerType:
+          actor.controllerType ?? null,
       }
     }
   }
@@ -305,4 +326,18 @@ export function sweepDashAgainstEnemies({
         earliest.t,
     },
   }
+}
+
+// Compatibility aliases retained for the P2-MOVE-009 regression suite.
+// Semantics are now universal and no longer filter by team.
+export function resolveEnemySoftSeparation(options) {
+  return resolveLivingBodySoftSeparation(
+    options
+  )
+}
+
+export function sweepDashAgainstEnemies(options) {
+  return sweepDashAgainstLivingActors(
+    options
+  )
 }
