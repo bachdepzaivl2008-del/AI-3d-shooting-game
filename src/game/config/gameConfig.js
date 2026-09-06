@@ -127,7 +127,19 @@ export const gameConfig = {
         z: 5,
       },
       team: 'red',
+      controllerType: 'bot',
       color: 0xcc3344,
+    },
+
+    friendlyBotDummy: {
+      position: {
+        x: -8,
+        y: 0.91,
+        z: 5,
+      },
+      team: 'blue',
+      controllerType: 'bot',
+      color: 0x3366cc,
     },
   },
 
