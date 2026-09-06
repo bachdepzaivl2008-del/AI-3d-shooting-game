@@ -25,6 +25,27 @@ function latestPlayerInput(intents) {
   return latest
 }
 
+function createLivingDummy(
+  ids,
+  fixture,
+  characterConfig
+) {
+  return {
+    id: ids.entity.next(),
+    team: fixture.team,
+    controllerType:
+      fixture.controllerType ?? 'bot',
+    alive: true,
+    position: {
+      ...fixture.position,
+    },
+    totalHeight:
+      characterConfig.standingHeight,
+    radius:
+      characterConfig.radius,
+  }
+}
+
 export class Simulation {
   static async create(config) {
     const movementSystem =
@@ -52,24 +73,26 @@ export class Simulation {
 
     this.ids = createGameIdAllocators()
 
-    this.enemyDummy = {
-      id: this.ids.entity.next(),
-      team:
-        config.testArena.enemyDummy.team,
-      alive: true,
-      position: {
-        ...config.testArena
-          .enemyDummy.position,
-      },
-      totalHeight:
-        config.collision.character
-          .standingHeight,
-      radius:
-        config.collision.character.radius,
-    }
+    const characterConfig =
+      config.collision.character
+
+    this.enemyDummy =
+      createLivingDummy(
+        this.ids,
+        config.testArena.enemyDummy,
+        characterConfig
+      )
+
+    this.friendlyBotDummy =
+      createLivingDummy(
+        this.ids,
+        config.testArena.friendlyBotDummy,
+        characterConfig
+      )
 
     this.movementSystem.setLivingActors([
       this.enemyDummy,
+      this.friendlyBotDummy,
     ])
 
     this.events =
@@ -83,6 +106,8 @@ export class Simulation {
           this.movementSystem.getPosition(),
         enemyDummy:
           this.enemyDummy,
+        friendlyBotDummy:
+          this.friendlyBotDummy,
       })
 
     this.events.emit(
@@ -154,8 +179,6 @@ export class Simulation {
       // CharacterController may apply tiny vertical contact
       // corrections while remaining grounded. Those corrections
       // are collision resolution, not gameplay vertical velocity.
-      // Until Jump/Gravity owns Y velocity, grounded gameplay
-      // velocity must remain exactly zero.
       y:
         movement.grounded
           ? 0
@@ -233,10 +256,18 @@ export class Simulation {
     this.state.player.dashAttackLocked =
       movement.dashAttackLocked
 
+    // Compatibility fields from P2-MOVE-009 now represent contact
+    // against any living combatant, regardless of team/controller.
     this.state.player.dashEnemyContactId =
       movement.dashEnemyContactId
 
     this.state.player.enemySeparationContacts =
+      movement.enemySeparationContacts
+
+    this.state.player.dashLivingContactId =
+      movement.dashEnemyContactId
+
+    this.state.player.livingBodySeparationContacts =
       movement.enemySeparationContacts
 
     if (inputIntent) {
